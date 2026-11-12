@@ -1,7 +1,119 @@
 {% extends "base.html" %}
 
+{% block styles %}
+{{ super() }}
+<style>
+  .search-results { display: none; }
+  body.with-search .search-noresults { display: none; }
+  body.with-search .search-results { display: block; }
+  body.with-search .search-results .has-results { display: block; }
+  body.with-search .search-results .no-results { display: none; }
+  body.with-search.no-search-results .search-results .has-results { display: none; }
+  body.with-search.no-search-results .search-results .no-results { display: block; }
+  .search-results-list { list-style: none; padding-left: 0; }
+  .search-results-item { margin-bottom: 1.6em; }
+  .search-results-item a { font-weight: 600; }
+  .search-results-item p { margin: .3em 0 0; }
+</style>
+{% endblock %}
+
 {% block libs %}
 {{ super() }}
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 <script>mermaid.initialize({ startOnLoad: true });</script>
+<script>
+  (function () {
+    var input = document.querySelector("#book-search-input input");
+    if (!input) {
+      return;
+    }
+
+    var isEnglish = document.documentElement.lang === "en";
+    var baseUrl = "{{ base_url }}";
+    if (baseUrl && baseUrl.slice(-1) !== "/") {
+      baseUrl += "/";
+    }
+    var docs = null;
+
+    function normalize(value) {
+      return (value || "").toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function load() {
+      if (docs) {
+        return Promise.resolve(docs);
+      }
+      return fetch(baseUrl + "search/search_index.json")
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+          docs = data.docs.filter(function (doc) {
+            var isLocalized = doc.location.indexOf("en/") === 0;
+            return isEnglish ? isLocalized : !isLocalized;
+          });
+          return docs;
+        });
+    }
+
+    function clear() {
+      document.body.classList.remove("with-search", "no-search-results");
+    }
+
+    function search() {
+      var query = input.value.trim();
+      if (query.length < 2) {
+        clear();
+        return;
+      }
+
+      load().then(function (entries) {
+        var normalized = normalize(query);
+        var results = entries.filter(function (doc) {
+          return normalize(doc.title).indexOf(normalized) !== -1
+            || normalize(doc.text).indexOf(normalized) !== -1;
+        }).slice(0, 20);
+
+        var list = document.querySelector(".search-results-list");
+        list.innerHTML = "";
+
+        results.forEach(function (doc) {
+          var item = document.createElement("li");
+          item.className = "search-results-item";
+
+          var link = document.createElement("a");
+          link.href = baseUrl + doc.location;
+          link.textContent = doc.title || doc.location;
+
+          var excerpt = document.createElement("p");
+          var text = (doc.text || "").replace(/\s+/g, " ").trim();
+          var position = normalize(text).indexOf(normalized);
+          var start = Math.max(0, position - 60);
+          var end = Math.min(text.length, position + 120);
+          excerpt.textContent = text.substring(start, end) + (end < text.length ? "…" : "");
+
+          item.appendChild(link);
+          item.appendChild(excerpt);
+          list.appendChild(item);
+        });
+
+        document.querySelector(".search-results-count").textContent = results.length;
+        document.querySelectorAll(".search-query").forEach(function (element) {
+          element.textContent = query;
+        });
+        document.body.classList.add("with-search");
+        document.body.classList.toggle("no-search-results", results.length === 0);
+      });
+    }
+
+    input.addEventListener("input", search);
+    input.addEventListener("keyup", search);
+    input.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        input.value = "";
+        clear();
+      }
+    });
+  })();
+</script>
 {% endblock %}
