@@ -17,7 +17,7 @@ import org.jboss.jandex.DotName;
 /**
  * Quarkus build steps of the Harpia Arch extension.
  */
-class HarpiaArchProcessor {
+public class HarpiaArchProcessor {
 
     private static final String FEATURE = "harpia-arch";
 
