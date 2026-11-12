@@ -20,9 +20,9 @@ A aplicação usa **`harpia-quarkus`** como pai. O POM fica só com a identidade
 
 ```xml
 <parent>
-    <groupId>io.github.Krisner94</groupId>
+    <groupId>io.github.krisner94</groupId>
     <artifactId>harpia-quarkus</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </parent>
 
 <groupId>com.acme</groupId>
@@ -323,3 +323,17 @@ Resultado de referência nesta máquina (3 warmups, 5 medições de 500 ms):
 Os números são específicos do ambiente; use `-prof gc` e mais iterações para análises
 comparativas.
 
+
+## Maven Central
+
+A biblioteca está preparada para distribuição no Maven Central com:
+
+```text
+io.github.krisner94:harpia-core:1.0.0
+io.github.krisner94:harpia-core-deployment:1.0.0
+io.github.krisner94:harpia-quarkus:1.0.0
+io.github.krisner94:harpia-arch:1.0.0
+```
+
+O processo completo (namespace, GPG, credenciais e comando de deploy) está em
+[`RELEASING.md`](RELEASING.md).
