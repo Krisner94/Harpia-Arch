@@ -22,7 +22,7 @@ compatibilidade com GraalVM Native Image.
 
 ```mermaid
 flowchart LR
-    Controller["Controller\n(contrato OpenAPI)"] --> Workflow
+    Controller["Controller (contrato OpenAPI)"] --> Workflow
     Workflow --> A1["Activity 1"]
     A1 --> A2["Activity 2"]
     A2 --> A3["Activity 3"]

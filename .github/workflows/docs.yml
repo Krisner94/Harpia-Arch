@@ -7,6 +7,8 @@ on:
       - "docs/**"
       - "mkdocs.yml"
       - "requirements-docs.txt"
+      - "hooks.py"
+      - "overrides/**"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 

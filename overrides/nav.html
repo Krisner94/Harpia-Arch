@@ -1,0 +1,51 @@
+<nav role="navigation">
+<ul class="summary">
+{%- block site_name %}
+<li>
+<a href="{{ nav.homepage.url | url }}" target="_blank" class="custom-link">{{ config.site_name }}</a>
+</li>
+{%- endblock %}
+<li class="divider"></li>
+
+{%- if page and page.url is defined and config.extra.languages | length > 1 %}
+{%- set is_en = page.url.startswith('en/') %}
+{%- set page_path = page.url | replace('en/', '', 1) %}
+<li class="header">Idioma / Language</li>
+<li class="chapter{% if not is_en %} active{% endif %}">
+<a href="{{ page_path | url }}">Português</a>
+</li>
+<li class="chapter{% if is_en %} active{% endif %}">
+<a href="{{ (('en/' ~ page_path) if not is_en else page.url) | url }}">English</a>
+</li>
+<li class="divider"></li>
+{%- endif %}
+
+{%- if nav | length >=1 %}
+{%- for nav_item in nav %}
+{%- if nav_item.children %}
+<li class="header">{{ nav_item.title }}</li>
+{%- for nav_item in nav_item.children %}
+{% include "nav-sub.html" %}
+{%- endfor %}
+{% else %}
+<li class="chapter{% if nav_item.active %} active{% endif %}" data-path="{{ nav_item.url }}">
+<a href="{{ nav_item.url | url }}">{{ nav_item.title }}</a>
+{%- endif %}
+{%- endfor %}
+<li class="divider"></li>
+{%- endif %}
+
+{% if config.copyright %}
+<li>{{ config.copyright }}</li>
+{% endif %}
+
+<li><a href="http://www.mkdocs.org">
+Published with MkDocs
+</a></li>
+
+<li><a href="https://github.com/GitbookIO/theme-default">
+Theme by GitBook
+</a></li>
+</ul>
+
+</nav>

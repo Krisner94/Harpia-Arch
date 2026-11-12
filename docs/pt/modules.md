@@ -13,10 +13,10 @@
 
 ```mermaid
 flowchart TB
-    ARCH["harpia-arch\n(POM pai)"]
-    QUARKUS["harpia-quarkus\n(POM pai de aplicações)"]
-    CORE["harpia-core\n(engine + annotations)"]
-    DEPLOY["harpia-core-deployment\n(validação de build)"]
+    ARCH["harpia-arch (POM pai)"]
+    QUARKUS["harpia-quarkus (POM pai de aplicações)"]
+    CORE["harpia-core (engine + annotations)"]
+    DEPLOY["harpia-core-deployment (validação de build)"]
 
     ARCH --> QUARKUS
     QUARKUS --> CORE

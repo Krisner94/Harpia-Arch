@@ -8,37 +8,54 @@ edit_uri: edit/main/docs/
 copyright: Copyright &copy; 2026 Rhama Krisner
 
 theme:
-  name: material
-  language: pt
-  features:
-    - navigation.sections
-    - navigation.expand
-    - navigation.indexes
-    - navigation.top
-    - search.suggest
-    - search.highlight
-    - content.code.copy
-    - content.code.select
-  palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/brightness-7
-        name: Modo escuro
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/brightness-4
-        name: Modo claro
-  font:
-    text: Roboto
-    code: Roboto Mono
-  icon:
-    repo: fontawesome/brands/github
+  name: gitbook
+  custom_dir: overrides
+
+extra:
+  languages:
+    - locale: pt
+      name: Português
+    - locale: en
+      name: English
+
+hooks:
+  - hooks.py
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: folder
+      languages:
+        - locale: pt
+          name: Português
+          default: true
+          build: true
+        - locale: en
+          name: English
+          build: true
+          site_description: Java architecture for typed workflows on Quarkus.
+          nav_translations:
+            Início: Home
+            Primeiros passos: Getting started
+            Módulos: Modules
+            Núcleo: Core
+            Workflow engine: Workflow engine
+            Annotations: Annotations
+            Validação em build: Build validation
+            Guias: Guides
+            Contract First: Contract First
+            Persistência: Persistence
+            Segurança: Security
+            Native Image: Native Image
+            Benchmarks: Benchmarks
+            Maven Central: Maven Central
+            Arquitetura: Architecture
+            Decisões: Decisions
+            Referência: Reference
+            API Java: Java API
+            FAQ: FAQ
+            Contribuição: Contributing
+            Changelog: Changelog
 
 markdown_extensions:
   - admonition
@@ -48,7 +65,7 @@ markdown_extensions:
   - md_in_html
   - tables
   - toc:
-      permalink: true
+      permalink: false
   - pymdownx.details
   - pymdownx.superfences:
       custom_fences:
@@ -63,9 +80,6 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.tasklist:
       custom_checkbox: true
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 nav:
   - Início: index.md
