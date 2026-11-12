@@ -7,19 +7,6 @@
 {%- endblock %}
 <li class="divider"></li>
 
-{%- if page and page.url is defined and config.extra.languages | length > 1 %}
-{%- set is_en = page.url.startswith('en/') %}
-{%- set page_path = page.url | replace('en/', '', 1) %}
-<li class="header">Idioma / Language</li>
-<li class="chapter{% if not is_en %} active{% endif %}">
-<a href="{{ page_path | url }}">Português</a>
-</li>
-<li class="chapter{% if is_en %} active{% endif %}">
-<a href="{{ (('en/' ~ page_path) if not is_en else page.url) | url }}">English</a>
-</li>
-<li class="divider"></li>
-{%- endif %}
-
 {%- if nav | length >= 1 %}
 {%- for nav_item in nav %}
 {%- if nav_item.children %}

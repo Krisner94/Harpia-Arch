@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Harpia Arch">
+  <rect width="64" height="64" rx="14" fill="#008cff"/>
+  <path d="M17 47V17h7v11h16V17h7v30h-7V36H24v11z" fill="#ffffff"/>
+  <path d="M32 9l4.5 6.5L32 22l-4.5-6.5z" fill="#ffffff" opacity="0.85"/>
+</svg>

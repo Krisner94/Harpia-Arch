@@ -53,13 +53,22 @@
 <div class="book-body">
 <div class="body-inner">
 <div class="book-header" role="navigation">
-
-<!-- Title -->
-<h1>
-<i class="fa fa-circle-o-notch fa-spin"></i>
-<a href="." ></a>
-</h1>
-
+<button class="header-menu" type="button" aria-label="Abrir menu">&#9776;</button>
+<a class="header-brand" href="{{ nav.homepage.url | url }}">
+<img class="header-logo" src="{{ base_url }}/assets/logo.svg" alt="Harpia Arch">
+<span class="header-title">{{ config.site_name }}</span>
+</a>
+<div class="header-actions">
+<span class="header-version">v1.0.0</span>
+<a class="header-link" href="https://github.com/Krisner94/Harpia-Arch" target="_blank" rel="noopener">GitHub</a>
+{%- set is_en = page and page.url is defined and page.url.startswith('en/') %}
+{%- set page_path = (page.url | replace('en/', '', 1)) if page and page.url is defined else '' %}
+<div class="language-switcher" aria-label="Idioma / Language">
+<a href="{{ page_path | url }}" class="{% if not is_en %}active{% endif %}">PT</a>
+<span>/</span>
+<a href="{{ (('en/' ~ page_path) if not is_en else page.url) | url }}" class="{% if is_en %}active{% endif %}">EN</a>
+</div>
+</div>
 </div> <!-- end of book-header -->
 
 <div class="page-wrapper" tabindex="-1" role="main">

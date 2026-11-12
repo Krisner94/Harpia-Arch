@@ -11,13 +11,6 @@ theme:
   name: gitbook
   custom_dir: overrides
 
-extra:
-  languages:
-    - locale: pt
-      name: Português
-    - locale: en
-      name: English
-
 hooks:
   - hooks.py
 

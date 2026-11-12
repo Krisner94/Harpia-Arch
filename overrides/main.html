@@ -27,6 +27,86 @@
     padding-left: 12px;
     margin: 0;
   }
+  .book-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 15px;
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, .07);
+  }
+  .header-menu {
+    display: none;
+    background: none;
+    border: 0;
+    padding: 0 6px 0 0;
+    color: #364149;
+    font-size: 22px;
+    line-height: 50px;
+    cursor: pointer;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #364149;
+    font-size: 1.8rem;
+    font-weight: 600;
+  }
+  .header-brand:hover {
+    text-decoration: none;
+  }
+  .header-logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-left: auto;
+    font-size: 1.2rem;
+    color: #7e888b;
+  }
+  .header-version {
+    padding: 2px 7px;
+    border: 1px solid rgba(0, 0, 0, .12);
+    border-radius: 10px;
+    color: #939da3;
+    white-space: nowrap;
+  }
+  .header-link {
+    color: #364149;
+    font-weight: 500;
+  }
+  .language-switcher {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-left: 12px;
+    border-left: 1px solid rgba(0, 0, 0, .1);
+  }
+  .language-switcher a {
+    color: #7e888b;
+    padding: 2px;
+  }
+  .language-switcher a.active {
+    color: #008cff;
+    font-weight: 700;
+  }
+  @media (max-width: 600px) {
+    .header-menu {
+      display: block;
+    }
+    .header-title,
+    .header-version {
+      display: none;
+    }
+    .header-actions {
+      gap: 8px;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -129,4 +209,24 @@
     });
   })();
 </script>
+
+<script>
+  (function () {
+    var book = document.querySelector(".book");
+    var button = document.querySelector(".header-menu");
+    if (book && button) {
+      button.addEventListener("click", function () {
+        book.classList.toggle("with-summary");
+      });
+      document.querySelectorAll(".book-summary a").forEach(function (link) {
+        link.addEventListener("click", function () {
+          if (window.innerWidth <= 600) {
+            book.classList.remove("with-summary");
+          }
+        });
+      });
+    }
+  })();
+</script>
+
 {% endblock %}
