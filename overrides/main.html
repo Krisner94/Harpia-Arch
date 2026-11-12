@@ -1,8 +1,37 @@
 {% extends "base.html" %}
 
+{% block extrahead %}
+{{ super() }}
+<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem("harpia-accent");
+      if (stored && /^#[0-9a-f]{6}$/i.test(stored)) {
+        document.documentElement.style.setProperty("--harpia-accent", stored);
+      }
+    } catch (error) {
+    }
+  })();
+</script>
+{% endblock %}
+
 {% block styles %}
 {{ super() }}
 <style>
+  :root { --harpia-accent: {{ config.extra.theme_color | default('#008cff') }}; }
+  .markdown-section a,
+  .search-results-item a {
+    color: var(--harpia-accent);
+  }
+  .book-summary ul.summary li.active > a,
+  .book-summary ul.summary li a.active,
+  .language-switcher a.active {
+    color: var(--harpia-accent) !important;
+  }
+  .header-brand:hover,
+  .header-link:hover {
+    color: var(--harpia-accent);
+  }
   .search-results { display: none; }
   body.with-search .search-noresults { display: none; }
   body.with-search .search-results { display: block; }
@@ -94,6 +123,27 @@
   .language-switcher a.active {
     color: #008cff;
     font-weight: 700;
+  }
+  .theme-color {
+    display: flex;
+    align-items: center;
+  }
+  .theme-color input[type="color"] {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid rgba(0, 0, 0, .15);
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+  }
+  .theme-color input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+  .theme-color input[type="color"]::-webkit-color-swatch,
+  .theme-color input[type="color"]::-moz-color-swatch {
+    border: none;
+    border-radius: 50%;
   }
   @media (max-width: 600px) {
     .header-menu {
@@ -226,6 +276,32 @@
         });
       });
     }
+  })();
+</script>
+
+
+<script>
+  (function () {
+    var input = document.querySelector("#theme-color");
+    if (!input) {
+      return;
+    }
+
+    try {
+      var stored = localStorage.getItem("harpia-accent");
+      if (stored && /^#[0-9a-f]{6}$/i.test(stored)) {
+        input.value = stored;
+      }
+    } catch (error) {
+    }
+
+    input.addEventListener("input", function () {
+      document.documentElement.style.setProperty("--harpia-accent", input.value);
+      try {
+        localStorage.setItem("harpia-accent", input.value);
+      } catch (error) {
+      }
+    });
   })();
 </script>
 

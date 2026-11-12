@@ -61,6 +61,9 @@
 <div class="header-actions">
 <span class="header-version">v1.0.0</span>
 <a class="header-link" href="https://github.com/Krisner94/Harpia-Arch" target="_blank" rel="noopener">GitHub</a>
+<label class="theme-color" title="Cor do tema">
+<input id="theme-color" type="color" value="{{ config.extra.theme_color | default('#008cff') }}" aria-label="Cor do tema">
+</label>
 {%- set is_en = page and page.url is defined and page.url.startswith('en/') %}
 {%- set page_path = (page.url | replace('en/', '', 1)) if page and page.url is defined else '' %}
 <div class="language-switcher" aria-label="Idioma / Language">
