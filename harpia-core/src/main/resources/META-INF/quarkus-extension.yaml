@@ -1,0 +1,9 @@
+name: "Harpia Core"
+description: "Architectural annotations and build-time validation for Harpia Arch applications."
+metadata:
+  keywords:
+    - "harpia"
+    - "architecture"
+    - "workflow"
+  categories:
+    - "miscellaneous"
