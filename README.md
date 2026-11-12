@@ -1,5 +1,7 @@
 # Harpia Arch
 
+[Documentação completa](https://krisner94.github.io/Harpia-Arch/)
+
 Base Maven para aplicações Quarkus com **OpenAPI contract-first** e o núcleo de workflows
 [`harpia-core`](harpia-core/README.md).
 

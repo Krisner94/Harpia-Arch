@@ -1,0 +1,92 @@
+site_name: Harpia Arch
+site_description: Arquitetura Java para workflows tipados sobre Quarkus.
+site_url: https://krisner94.github.io/Harpia-Arch/
+site_author: Rhama Krisner
+repo_url: https://github.com/Krisner94/Harpia-Arch
+repo_name: Krisner94/Harpia-Arch
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; 2026 Rhama Krisner
+
+theme:
+  name: material
+  language: pt
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.select
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Modo escuro
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Modo claro
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Início: index.md
+  - Primeiros passos: getting-started.md
+  - Módulos: modules.md
+  - Núcleo:
+      - Workflow engine: core/workflow-engine.md
+      - Annotations: core/annotations.md
+      - Validação em build: core/build-validation.md
+  - Guias:
+      - Contract First: guides/contract-first.md
+      - Persistência: guides/persistence.md
+      - Segurança: guides/security.md
+      - Native Image: guides/native-image.md
+      - Benchmarks: guides/benchmarks.md
+      - Maven Central: guides/maven-central.md
+  - Arquitetura:
+      - Decisões: architecture/decisions.md
+  - Referência:
+      - API Java: reference/api.md
+      - FAQ: faq.md
+  - Contribuição: contributing.md
+  - Changelog: changelog.md
