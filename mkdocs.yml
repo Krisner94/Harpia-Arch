@@ -11,9 +11,6 @@ theme:
   name: gitbook
   custom_dir: overrides
 
-extra:
-  theme_color: "#008cff"
-
 hooks:
   - hooks.py
 

@@ -4,13 +4,17 @@
 {{ super() }}
 <script>
   (function () {
+    var theme = "light";
     try {
-      var stored = localStorage.getItem("harpia-accent");
-      if (stored && /^#[0-9a-f]{6}$/i.test(stored)) {
-        document.documentElement.style.setProperty("--harpia-accent", stored);
+      var stored = localStorage.getItem("harpia-theme");
+      if (stored === "light" || stored === "dark") {
+        theme = stored;
+      } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        theme = "dark";
       }
     } catch (error) {
     }
+    document.documentElement.setAttribute("data-theme", theme);
   })();
 </script>
 {% endblock %}
@@ -18,10 +22,119 @@
 {% block styles %}
 {{ super() }}
 <style>
-  :root { --harpia-accent: {{ config.extra.theme_color | default('#008cff') }}; }
+  :root {
+    --harpia-accent: #008cff;
+    --harpia-bg: #ffffff;
+    --harpia-text: #333333;
+    --harpia-muted: #7e888b;
+    --harpia-sidebar: #fafafa;
+    --harpia-header: #ffffff;
+    --harpia-border: rgba(0, 0, 0, .07);
+    --harpia-code: #f7f7f7;
+    --harpia-table: #f8f8f8;
+  }
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --harpia-accent: #4da3ff;
+    --harpia-bg: #16181d;
+    --harpia-text: #d7dbe0;
+    --harpia-muted: #9aa3ad;
+    --harpia-sidebar: #111318;
+    --harpia-header: #111318;
+    --harpia-border: rgba(255, 255, 255, .09);
+    --harpia-code: #22262d;
+    --harpia-table: #1b1f26;
+  }
+  html, body {
+    background: var(--harpia-bg);
+    color: var(--harpia-text);
+  }
+  .book-body, .page-wrapper {
+    background: var(--harpia-bg);
+  }
+  .book-summary {
+    background: var(--harpia-sidebar);
+    color: var(--harpia-text);
+    border-right-color: var(--harpia-border);
+  }
+  .book-summary ul.summary li a,
+  .book-summary ul.summary li span {
+    color: var(--harpia-text);
+  }
+  .book-summary ul.summary li.header {
+    color: var(--harpia-muted);
+  }
+  .book-summary ul.summary li.divider {
+    background: var(--harpia-border);
+  }
+  .book-header {
+    background: var(--harpia-header);
+    border-bottom-color: var(--harpia-border);
+  }
+  .header-brand, .header-link {
+    color: var(--harpia-text);
+  }
+  .header-version {
+    color: var(--harpia-muted);
+    border-color: var(--harpia-border);
+  }
+  .language-switcher a {
+    color: var(--harpia-muted);
+  }
+  .markdown-section {
+    color: var(--harpia-text);
+  }
+  .markdown-section h1, .markdown-section h2, .markdown-section h3,
+  .markdown-section h4, .markdown-section h5, .markdown-section h6 {
+    color: var(--harpia-text);
+  }
   .markdown-section a,
   .search-results-item a {
     color: var(--harpia-accent);
+  }
+  .markdown-section code {
+    background: var(--harpia-code);
+    color: var(--harpia-text);
+  }
+  .markdown-section pre,
+  .markdown-section pre > code {
+    background: var(--harpia-code);
+    color: var(--harpia-text);
+  }
+  .markdown-section table {
+    background: var(--harpia-bg);
+  }
+  .markdown-section table tr {
+    background: var(--harpia-bg);
+    border-color: var(--harpia-border);
+  }
+  .markdown-section table tr:nth-child(2n) {
+    background: var(--harpia-table);
+  }
+  .markdown-section table th,
+  .markdown-section table td {
+    border-color: var(--harpia-border);
+  }
+  .markdown-section table th {
+    background: var(--harpia-table);
+    color: var(--harpia-text);
+  }
+  .markdown-section blockquote {
+    color: var(--harpia-muted);
+    border-left-color: var(--harpia-border);
+  }
+  .markdown-section hr {
+    background-color: var(--harpia-border);
+  }
+  #book-search-input input {
+    color: var(--harpia-text);
+  }
+  .search-results-title,
+  .search-results-item p {
+    color: var(--harpia-muted);
+  }
+  .search-results-item {
+    color: var(--harpia-text);
   }
   .book-summary ul.summary li.active > a,
   .book-summary ul.summary li a.active,
@@ -47,7 +160,7 @@
     display: block;
     padding: 14px 15px 6px;
     font-weight: 600;
-    color: #364149;
+    color: var(--harpia-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -61,15 +174,15 @@
     align-items: center;
     gap: 12px;
     padding: 0 15px;
-    background: #ffffff;
-    border-bottom: 1px solid rgba(0, 0, 0, .07);
+    background: var(--harpia-header);
+    border-bottom: 1px solid var(--harpia-border);
   }
   .header-menu {
     display: none;
     background: none;
     border: 0;
     padding: 0 6px 0 0;
-    color: #364149;
+    color: var(--harpia-text);
     font-size: 22px;
     line-height: 50px;
     cursor: pointer;
@@ -78,7 +191,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #364149;
+    color: var(--harpia-text);
     font-size: 1.8rem;
     font-weight: 600;
   }
@@ -96,17 +209,17 @@
     gap: 14px;
     margin-left: auto;
     font-size: 1.2rem;
-    color: #7e888b;
+    color: var(--harpia-muted);
   }
   .header-version {
     padding: 2px 7px;
-    border: 1px solid rgba(0, 0, 0, .12);
+    border: 1px solid var(--harpia-border);
     border-radius: 10px;
-    color: #939da3;
+    color: var(--harpia-muted);
     white-space: nowrap;
   }
   .header-link {
-    color: #364149;
+    color: var(--harpia-text);
     font-weight: 500;
   }
   .language-switcher {
@@ -114,36 +227,46 @@
     align-items: center;
     gap: 4px;
     padding-left: 12px;
-    border-left: 1px solid rgba(0, 0, 0, .1);
+    border-left: 1px solid var(--harpia-border);
   }
   .language-switcher a {
-    color: #7e888b;
+    color: var(--harpia-muted);
     padding: 2px;
   }
   .language-switcher a.active {
-    color: #008cff;
+    color: var(--harpia-accent);
     font-weight: 700;
   }
-  .theme-color {
+  .theme-toggle {
     display: flex;
     align-items: center;
-  }
-  .theme-color input[type="color"] {
-    width: 22px;
-    height: 22px;
-    padding: 0;
-    border: 1px solid rgba(0, 0, 0, .15);
-    border-radius: 50%;
-    background: transparent;
+    justify-content: center;
+    padding: 2px;
+    border: 0;
+    background: none;
+    color: var(--harpia-muted);
     cursor: pointer;
   }
-  .theme-color input[type="color"]::-webkit-color-swatch-wrapper {
-    padding: 0;
+  .theme-toggle:hover {
+    color: var(--harpia-accent);
   }
-  .theme-color input[type="color"]::-webkit-color-swatch,
-  .theme-color input[type="color"]::-moz-color-swatch {
-    border: none;
-    border-radius: 50%;
+  .theme-toggle .icon-sun {
+    display: none;
+  }
+  html[data-theme="dark"] .theme-toggle .icon-sun {
+    display: block;
+  }
+  html[data-theme="dark"] .theme-toggle .icon-moon {
+    display: none;
+  }
+  html[data-theme="dark"] .book-header {
+    background-color: #111318 !important;
+  }
+  html[data-theme="dark"] #book-search-input {
+    background-color: #111318;
+  }
+  html[data-theme="dark"] #book-search-input input {
+    background: transparent;
   }
   @media (max-width: 600px) {
     .header-menu {
@@ -282,23 +405,18 @@
 
 <script>
   (function () {
-    var input = document.querySelector("#theme-color");
-    if (!input) {
+    var root = document.documentElement;
+    var button = document.querySelector("#theme-toggle");
+    if (!button) {
       return;
     }
 
-    try {
-      var stored = localStorage.getItem("harpia-accent");
-      if (stored && /^#[0-9a-f]{6}$/i.test(stored)) {
-        input.value = stored;
-      }
-    } catch (error) {
-    }
-
-    input.addEventListener("input", function () {
-      document.documentElement.style.setProperty("--harpia-accent", input.value);
+    button.addEventListener("click", function () {
+      var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      button.setAttribute("aria-label", next === "dark" ? "Ativar tema claro" : "Ativar tema escuro");
       try {
-        localStorage.setItem("harpia-accent", input.value);
+        localStorage.setItem("harpia-theme", next);
       } catch (error) {
       }
     });
