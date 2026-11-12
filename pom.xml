@@ -3,12 +3,37 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.Krisner94</groupId>
+    <groupId>io.github.krisner94</groupId>
     <artifactId>harpia-arch</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>pom</packaging>
     <name>Harpia Arch</name>
     <description>Contract-first OpenAPI code generation configuration for Quarkus applications.</description>
+    <url>https://github.com/Krisner94/Harpia-Arch</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>Krisner94</id>
+            <name>Rhama Krisner</name>
+            <email>rhamakrisner@gmail.com</email>
+            <url>https://github.com/Krisner94</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/Krisner94/Harpia-Arch.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/Krisner94/Harpia-Arch.git</developerConnection>
+        <url>https://github.com/Krisner94/Harpia-Arch</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <modules>
         <module>harpia-core</module>
@@ -19,7 +44,7 @@
     </modules>
 
     <properties>
-        <harpia.version>1.0.0-SNAPSHOT</harpia.version>
+        <harpia.version>1.0.0</harpia.version>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -46,7 +71,7 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>io.github.Krisner94</groupId>
+                <groupId>io.github.krisner94</groupId>
                 <artifactId>harpia-core</artifactId>
                 <version>${harpia.version}</version>
             </dependency>
@@ -145,6 +170,68 @@
                                 </configuration>
                             </execution>
                         </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.3.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.12.0</version>
+                        <configuration>
+                            <doclint>none</doclint>
+                            <quiet>true</quiet>
+                            <release>${maven.compiler.release}</release>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.8</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.12.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>false</autoPublish>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>

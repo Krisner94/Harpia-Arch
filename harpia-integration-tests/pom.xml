@@ -4,9 +4,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.github.Krisner94</groupId>
+        <groupId>io.github.krisner94</groupId>
         <artifactId>harpia-quarkus</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
+        <relativePath>../harpia-quarkus/pom.xml</relativePath>
     </parent>
 
     <artifactId>harpia-integration-tests</artifactId>
@@ -34,6 +35,7 @@
                 </property>
             </activation>
             <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
                 <skipITs>false</skipITs>
             </properties>
             <build>

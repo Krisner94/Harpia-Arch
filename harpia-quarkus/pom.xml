@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.github.Krisner94</groupId>
+        <groupId>io.github.krisner94</groupId>
         <artifactId>harpia-arch</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
 
     <artifactId>harpia-quarkus</artifactId>
@@ -40,7 +40,7 @@
             <artifactId>jakarta.validation-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.github.Krisner94</groupId>
+            <groupId>io.github.krisner94</groupId>
             <artifactId>harpia-core</artifactId>
         </dependency>
         <dependency>
