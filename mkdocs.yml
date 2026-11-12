@@ -11,7 +11,6 @@ theme:
   name: material
   language: pt
   features:
-    - navigation.tabs
     - navigation.sections
     - navigation.expand
     - navigation.indexes
