@@ -20,16 +20,21 @@
 <li class="divider"></li>
 {%- endif %}
 
-{%- if nav | length >=1 %}
+{%- if nav | length >= 1 %}
 {%- for nav_item in nav %}
 {%- if nav_item.children %}
-<li class="header">{{ nav_item.title }}</li>
+<li class="chapter nav-section">
+<span>{{ nav_item.title }}</span>
+<ul>
 {%- for nav_item in nav_item.children %}
 {% include "nav-sub.html" %}
 {%- endfor %}
-{% else %}
+</ul>
+</li>
+{%- else %}
 <li class="chapter{% if nav_item.active %} active{% endif %}" data-path="{{ nav_item.url }}">
 <a href="{{ nav_item.url | url }}">{{ nav_item.title }}</a>
+</li>
 {%- endif %}
 {%- endfor %}
 <li class="divider"></li>
