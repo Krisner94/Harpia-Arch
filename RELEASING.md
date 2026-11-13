@@ -1,15 +1,15 @@
 # Publicação
 
-O projeto tem dois canais de distribuição, ambos automatizados por GitHub Actions:
+O projeto tem duas branches de publicação, ambas automatizadas por GitHub Actions:
 
-| Canal | Ambiente | Versão | Destino | Definitivo? |
+| Branch | Canal | Versão | Destino | Definitivo? |
 |---|---|---|---|---|
-| **Beta** | testes | `X.Y.Z-beta-SNAPSHOT` | [Central snapshots](https://central.sonatype.com/repository/maven-snapshots/) | não |
-| **Release** | produção | `X.Y.Z` | [Maven Central](https://repo1.maven.org/maven2/io/github/krisner94/) | sim |
+| `beta` | testes | `X.Y.Z-beta-SNAPSHOT` | [Central snapshots](https://central.sonatype.com/repository/maven-snapshots/) | não |
+| `main` | produção | `X.Y.Z` | [Maven Central](https://repo1.maven.org/maven2/io/github/krisner94/) | sim |
 
-O canal beta é disparado automaticamente a cada push na `main` (workflow `Beta (snapshot)`).
-O canal de produção é disparado manualmente (workflow `Release`) e exige aprovação no
-environment `production` antes de qualquer coisa sair do GitHub.
+Todo push na `beta` publica um snapshot. Todo push na `main` publica uma versão
+definitiva — **se a versão do `pom.xml` ainda não existir no Central**. Se já existir
+(ou a tag `vX.Y.Z` já existir), o workflow encerra como *nada a fazer* e fica verde.
 
 ## Artefatos publicados
 
@@ -88,19 +88,24 @@ Sem revisores configurados, o job roda direto após o disparo.
 
 ---
 
-## Como lançar uma versão (produção)
+## Como lançar uma versão
 
-1. GitHub → **Actions** → **Release** → **Run workflow**:
-   - `version`: a versão a publicar, ex.: `1.0.0` (sem `-SNAPSHOT`);
-   - `next_version`: opcional; por padrão o workflow sobe o patch para `X.Y.(Z+1)-SNAPSHOT`;
-   - `dry_run`: marque para apenas buildar e testar.
-2. O job **Build and test** roda antes de qualquer aprovação.
-3. O job **Publish** fica em *Waiting for approval*. Aprove em **Review deployments**.
-4. O workflow então:
+```
+1. trabalhe e faça push na beta          -> 1.1.0-beta-SNAPSHOT (snapshots)
+2. quando estiver bom, suba a versão no pom.xml da beta para 1.1.0
+3. abra PR de beta -> main e faça merge  -> 1.1.0 (Maven Central + tag v1.1.0)
+```
+
+1. Na branch `beta`, cada push publica `X.Y.Z-beta-SNAPSHOT` automaticamente.
+2. Quando o beta estiver validado, altere a versão no `pom.xml` (na `beta`) para a versão
+   final, sem sufixo: `1.1.0`.
+3. Faça merge de `beta` na `main`. O push na `main` dispara o workflow **Release**.
+4. O job **Build and test** roda; depois o **Publish** fica em *Waiting for approval*.
+   Aprove em **Review deployments**.
+5. O workflow então:
    - assina e publica os artefatos no Maven Central (`autoPublish=true`);
-   - espera o Central terminar a publicação;
-   - cria a tag `vX.Y.Z` e o GitHub Release com as notas geradas;
-   - commita a próxima versão de desenvolvimento (`chore: start X.Y.Z-SNAPSHOT ...`).
+   - espera o Central concluir a publicação;
+   - cria a tag `vX.Y.Z` e o GitHub Release com as notas geradas.
 
 Em alguns minutos os artefatos ficam disponíveis em:
 
@@ -108,12 +113,19 @@ Em alguns minutos os artefatos ficam disponíveis em:
 https://repo1.maven.org/maven2/io/github/krisner94/harpia-core/X.Y.Z/
 ```
 
-### Antes de disparar
+### Disparo manual
+
+**Actions → Release → Run workflow** permite publicar sem push (ex.: republicar após uma
+falha). Os campos `version` (vazio = versão do `pom.xml`) e `dry_run` continuam disponíveis.
+
+### Antes de publicar
 
 - a `main` precisa estar verde no CI;
-- a versão não pode já existir (o workflow falha se a tag `vX.Y.Z` existir);
-- para versões `X.Y.Z`, o Maven Central é imutável: erros de metadata não podem ser
-  corrigidos na mesma versão, só em uma nova.
+- a versão não pode existir no Central nem ter tag `vX.Y.Z` (se existir, o workflow apenas
+  registra *nada a fazer* e encerra verde);
+- para versões `X.Y.Z` o Maven Central é imutável: erros de metadata não podem ser
+  corrigidos na mesma versão, só em uma nova;
+- depois de publicar, faça merge da `main` de volta na `beta` para as branches não divergirem.
 
 ### Releases locais (sem GitHub Actions)
 
@@ -156,7 +168,7 @@ Para publicar sem auto-publish (revisar o bundle no portal antes):
 
 ## Como consumir o beta
 
-Quem quiser testar o snapshot mais recente da `main` adiciona o repositório de snapshots
+Quem quiser testar o snapshot mais recente da branch `beta` adiciona o repositório de snapshots
 e usa a versão `X.Y.Z-beta-SNAPSHOT`:
 
 ```xml
@@ -179,7 +191,7 @@ e usa a versão `X.Y.Z-beta-SNAPSHOT`:
 
 Para atualizar o snapshot local: `mvn -U clean verify`.
 
-O snapshot é sobrescrito a cada push na `main`; ele não é uma versão estável e não deve ser
+O snapshot é sobrescrito a cada push na `beta`; ele não é uma versão estável e não deve ser
 usado em produção.
 
 ---
@@ -192,13 +204,18 @@ porque um parent publicado é interpolado no contexto do app consumidor). `mvn v
 atualiza os três pontos de uma vez.
 
 ```
-1.0.1-SNAPSHOT  --push na main-->  1.0.1-beta-SNAPSHOT  (canal beta)
-1.0.1-SNAPSHOT  --Release 1.0.1--> 1.0.1               (Maven Central)
-                                     |
-                                     +--> bump automático para 1.0.2-SNAPSHOT
+beta:  1.1.0  --push-->  1.1.0-beta-SNAPSHOT   (sobrescrito a cada push)
+          |
+          |  merge (com a versão final já no pom)
+          v
+main:  1.1.0  --push-->  1.1.0                  (Maven Central, imutável)
+          |
+          +--> tag v1.1.0 + GitHub Release
 ```
 
-Para uma versão minor/major, informe `next_version` no disparo (ex.: `1.1.0-SNAPSHOT`).
+Depois de publicar, a `main` fica na versão já lançada. O próximo ciclo começa na `beta`
+subindo a versão (ex.: `1.2.0` ou `1.1.1`). Não há bump automático: a versão é sempre uma
+decisão explícita no `pom.xml`.
 
 ## Problemas comuns
 

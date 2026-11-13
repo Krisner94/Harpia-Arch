@@ -1,21 +1,28 @@
 name: Release
 
-# Ambiente de produção: publica uma versão definitiva no Maven Central,
-# cria a tag e o GitHub Release.
+# Produção. Dispara em push para a main e publica a versão do pom.xml no
+# Maven Central — mas só se essa versão ainda não existir lá (o Central é
+# imutável, então repetir a mesma versão falharia).
 #
-# O job `publish` usa o environment `production`, que exige aprovação manual
-# (Settings > Environments > production > Required reviewers). O build e os
-# testes rodam antes da aprovação; nada é publicado até você aprovar.
+# Fluxo:
+#   branch beta  -> X.Y.Z-beta-SNAPSHOT  (repositório de snapshots)
+#   branch main  -> X.Y.Z                (Maven Central + tag + release)
+#
+# Para lançar 1.1.0: suba a versão para 1.1.0 na beta, valide, faça merge na
+# main. O push na main é o gatilho. Se a versão já estiver publicada o
+# workflow encerra como "nada a fazer" (verde), sem quebrar o build.
 
 on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "website/**"
+      - "**.md"
+      - ".github/workflows/docs.yml"
   workflow_dispatch:
     inputs:
       version:
-        description: "Versão a publicar (ex.: 1.0.0)"
-        required: true
-        type: string
-      next_version:
-        description: "Versão de desenvolvimento após a release (padrão: patch+1-SNAPSHOT)"
+        description: "Versão a publicar (vazio = versão do pom.xml)"
         required: false
         type: string
       dry_run:
@@ -32,33 +39,81 @@ permissions:
   contents: read
 
 jobs:
+  prepare:
+    name: Resolve version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      should_publish: ${{ steps.resolve.outputs.should_publish }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve and validate version
+        id: resolve
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$REF" != "refs/heads/main" ]; then
+            echo "::error::Releases só podem ser publicadas a partir da branch main (atual: $REF)."
+            exit 1
+          fi
+
+          if [ -n "$INPUT_VERSION" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            VERSION=$(python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          ns = "{http://maven.apache.org/POM/4.0.0}"
+          print(ET.parse("pom.xml").getroot().find(ns + "version").text.strip())
+          PY
+          )
+          fi
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$ ]]; then
+            echo "::error::Versão inválida: '$VERSION'. Use X.Y.Z ou X.Y.Z-qualifier."
+            exit 1
+          fi
+          if [[ "$VERSION" == *SNAPSHOT* ]]; then
+            echo "::error::Versões -SNAPSHOT pertencem à branch beta."
+            exit 1
+          fi
+
+          TAG_EXISTS=false
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null 2>&1; then
+            TAG_EXISTS=true
+          fi
+
+          CENTRAL_CODE=$(curl -s -o /dev/null -w '%{http_code}' \
+            "https://repo1.maven.org/maven2/io/github/krisner94/harpia-core/$VERSION/harpia-core-$VERSION.pom")
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Versão: $VERSION | tag v$VERSION existe: $TAG_EXISTS | Central: HTTP $CENTRAL_CODE"
+
+          if [ "$TAG_EXISTS" = "true" ]; then
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Nada a fazer: a tag v$VERSION já existe."
+          elif [ "$CENTRAL_CODE" = "200" ]; then
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Nada a fazer: a versão $VERSION já está publicada no Maven Central."
+          elif [ "$DRY_RUN" = "true" ]; then
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::dry_run ativo: apenas build e testes."
+          else
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
   verify:
-    name: Build and test ${{ inputs.version }}
+    name: Build and test ${{ needs.prepare.outputs.version }}
+    needs: prepare
+    if: needs.prepare.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-
-      - name: Validate version
-        env:
-          VERSION: ${{ inputs.version }}
-        run: |
-          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
-            echo "::error::Releases só podem ser disparadas a partir da branch main (atual: $GITHUB_REF)."
-            exit 1
-          fi
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$ ]]; then
-            echo "::error::Versão inválida: '$VERSION'. Use o formato X.Y.Z ou X.Y.Z-qualifier."
-            exit 1
-          fi
-          if [[ "$VERSION" == *SNAPSHOT* ]]; then
-            echo "::error::Versões -SNAPSHOT são publicadas pelo workflow Beta."
-            exit 1
-          fi
-          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null 2>&1; then
-            echo "::error::A tag v$VERSION já existe. Escolha outra versão."
-            exit 1
-          fi
 
       - name: Set up JDK 25
         uses: actions/setup-java@v4
@@ -69,7 +124,7 @@ jobs:
 
       - name: Set release version
         env:
-          VERSION: ${{ inputs.version }}
+          VERSION: ${{ needs.prepare.outputs.version }}
         run: |
           ./mvnw -B -ntp versions:set \
             -DnewVersion="$VERSION" \
@@ -79,21 +134,10 @@ jobs:
       - name: Verify release profile
         run: ./mvnw -B -ntp -Prelease verify -Dgpg.skip=true -DskipITs
 
-      - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-artifacts
-          path: |
-            harpia-core/target/*.jar
-            harpia-core-deployment/target/*.jar
-            harpia-quarkus/target/*.pom
-          if-no-files-found: error
-          retention-days: 7
-
   publish:
-    name: Publish ${{ inputs.version }} to Maven Central
-    needs: verify
-    if: ${{ !inputs.dry_run }}
+    name: Publish ${{ needs.prepare.outputs.version }} to Maven Central
+    needs: [prepare, verify]
+    if: needs.prepare.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     environment:
@@ -103,6 +147,7 @@ jobs:
       contents: write
     env:
       MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      VERSION: ${{ needs.prepare.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -138,8 +183,6 @@ jobs:
             || { echo "::error::Nenhuma chave secreta importada."; exit 1; }
 
       - name: Set release version
-        env:
-          VERSION: ${{ inputs.version }}
         run: |
           ./mvnw -B -ntp versions:set \
             -DnewVersion="$VERSION" \
@@ -159,47 +202,26 @@ jobs:
       - name: Create tag and GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ inputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "v$VERSION" -m "Harpia Arch $VERSION"
-          git push origin "v$VERSION"
-          gh release create "v$VERSION" \
-            --title "Harpia Arch $VERSION" \
-            --generate-notes \
-            --verify-tag
-
-      - name: Bump development version
-        continue-on-error: true
-        env:
-          VERSION: ${{ inputs.version }}
-          NEXT_VERSION: ${{ inputs.next_version }}
-        run: |
-          if [ -z "$NEXT_VERSION" ]; then
-            MAJOR=${VERSION%%.*}
-            REST=${VERSION#*.}
-            MINOR=${REST%%.*}
-            PATCH=${REST#*.}
-            PATCH=${PATCH%%-*}
-            NEXT_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))-SNAPSHOT"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null 2>&1; then
+            echo "::notice::Tag v$VERSION já existe, pulando criação."
+          else
+            git tag -a "v$VERSION" -m "Harpia Arch $VERSION"
+            git push origin "v$VERSION"
+            gh release create "v$VERSION" \
+              --title "Harpia Arch $VERSION" \
+              --generate-notes \
+              --verify-tag
           fi
-          echo "Próxima versão de desenvolvimento: $NEXT_VERSION"
-          ./mvnw -B -ntp versions:set \
-            -DnewVersion="$NEXT_VERSION" \
-            -DgenerateBackupPoms=false \
-            -DprocessAllModules=true
-          git add -A -- 'pom.xml' ':(glob)**/pom.xml'
-          git commit -m "chore: start $NEXT_VERSION after $VERSION"
-          git push origin HEAD:main
 
       - name: Summary
         if: always()
         run: |
           {
-            echo "### Release ${{ inputs.version }}"
+            echo "### Release $VERSION"
             echo ""
-            echo "- Maven Central: https://repo1.maven.org/maven2/io/github/krisner94/harpia-core/${{ inputs.version }}/"
-            echo "- Release: https://github.com/${{ github.repository }}/releases/tag/v${{ inputs.version }}"
-            echo "- Central Portal: https://central.sonatype.com/publishing/deployments"
+            echo "- Maven Central: https://repo1.maven.org/maven2/io/github/krisner94/harpia-core/$VERSION/"
+            echo "- Release: https://github.com/${{ github.repository }}/releases/tag/v$VERSION"
           } >> "$GITHUB_STEP_SUMMARY"

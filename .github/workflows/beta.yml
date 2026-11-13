@@ -1,17 +1,20 @@
 name: Beta (snapshot)
 
-# Ambiente de testes: publica o snapshot mais recente da main no repositório
-# de snapshots do Maven Central. Nada é publicado de forma definitiva.
+# Ambiente de testes: publica o snapshot da branch beta no repositório de
+# snapshots do Maven Central. Nada é publicado de forma definitiva.
+#
+# Versionamento: a versão do pom.xml vira X.Y.Z-beta-SNAPSHOT.
+# Quando estiver pronto, suba a versão para X.Y.Z e faça merge na main.
 #
 # Consumo:
 #   <repository>
-#     <id>central-snapshots</id>
+#     <id>central-portal-snapshots</id>
 #     <url>https://central.sonatype.com/repository/maven-snapshots/</url>
 #   </repository>
 
 on:
   push:
-    branches: [main]
+    branches: [beta]
     paths-ignore:
       - "website/**"
       - "**.md"

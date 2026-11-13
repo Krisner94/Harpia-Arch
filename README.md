@@ -1,5 +1,10 @@
 # Harpia Arch
 
+[![CI](https://github.com/Krisner94/Harpia-Arch/actions/workflows/ci.yml/badge.svg)](https://github.com/Krisner94/Harpia-Arch/actions/workflows/ci.yml)
+[![Release](https://github.com/Krisner94/Harpia-Arch/actions/workflows/release.yml/badge.svg)](https://github.com/Krisner94/Harpia-Arch/actions/workflows/release.yml)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.krisner94/harpia-core)](https://central.sonatype.com/artifact/io.github.krisner94/harpia-core)
+[![Docs](https://img.shields.io/badge/docs-krisner94.github.io-blue)](https://krisner94.github.io/Harpia-Arch/)
+
 [Documentação completa](https://krisner94.github.io/Harpia-Arch/)
 
 Base Maven para aplicações Quarkus com **OpenAPI contract-first** e o núcleo de workflows
@@ -254,6 +259,50 @@ public class CreateCustomerWorkflow extends Workflow<CustomerInput, CustomerCont
 - contexto diferente em um subworkflow exige `adaptContext(...)` explícito;
 - não há reflexão, `Object` ou cast no encadeamento.
 
+### Contexto opcional
+
+O contexto não é obrigatório. É possível usar `Void` explicitamente ou omitir o contexto com
+`SimpleFlowItem`/`SimpleWorkflow`:
+
+```java
+// Sem declaração de Context
+@Activity
+public class TrimCustomerNameActivity
+        implements SimpleFlowItem<CustomerInput, CustomerInput> {
+
+    @Override
+    public CustomerInput execute(CustomerInput input) {
+        return new CustomerInput(input.name().trim());
+    }
+}
+```
+
+```java
+@WorkflowDefinition
+public class CreateCustomerWorkflow extends SimpleWorkflow<CustomerInput, Customer> {
+
+    @Override
+    protected void configure() {
+        flowBuilder = FlowBuilder.builder(CustomerInput.class)
+                .step(trim)
+                .step(persist)
+                .build();
+    }
+}
+```
+
+Também é possível manter o contrato de três parâmetros com `Void`:
+
+```java
+FlowItem<CustomerInput, Void, CustomerInput>
+Workflow<Void, Void, List<Customer>>
+```
+
+O contexto recebido é sempre `null`, sem criar objeto de contexto. `SimpleFlowItem` e
+`SimpleWorkflow` são necessários porque Java não permite sobrecarregar `FlowItem`/`Workflow` pelo
+número de parâmetros genéricos mantendo o mesmo nome. Atividades sem contexto podem ser usadas em
+workflows com contexto; o contexto é ignorado pela etapa e continua disponível para as seguintes.
+
 ## Build e testes
 
 ```bash
@@ -325,17 +374,48 @@ Resultado de referência nesta máquina (3 warmups, 5 medições de 500 ms):
 Os números são específicos do ambiente; use `-prof gc` e mais iterações para análises
 comparativas.
 
+### Documentação
+
+O site de documentação usa Docusaurus 3 e fica em `website/`.
+
+```bash
+cd website
+npm install
+npm start
+```
+
+O servidor local fica em `http://localhost:3000/Harpia-Arch/`. Para gerar o build estático:
+
+```bash
+cd website
+npm run build
+```
+
+O deploy no GitHub Pages é feito pelo workflow `.github/workflows/docs.yml` a cada push em
+`website/**`.
 
 ## Maven Central
 
-A biblioteca está preparada para distribuição no Maven Central com:
+Canais de distribuição, ambos automatizados por GitHub Actions:
+
+| Canal | Versão | Destino | Quando |
+|---|---|---|---|
+| **release** | `1.0.0` | [Maven Central](https://repo1.maven.org/maven2/io/github/krisner94/) | push/merge na `main`, com aprovação |
+| **beta** | `1.0.0-beta-SNAPSHOT` | [Central snapshots](https://central.sonatype.com/repository/maven-snapshots/) | a cada push na branch `beta` |
+
+Artefatos publicados:
 
 ```text
-io.github.krisner94:harpia-core:1.0.0
-io.github.krisner94:harpia-core-deployment:1.0.0
-io.github.krisner94:harpia-quarkus:1.0.0
-io.github.krisner94:harpia-arch:1.0.0
+io.github.krisner94:harpia-core
+io.github.krisner94:harpia-core-deployment
+io.github.krisner94:harpia-quarkus
+io.github.krisner94:harpia-arch
 ```
 
-O processo completo (namespace, GPG, credenciais e comando de deploy) está em
+Fluxo: trabalhe na branch `beta` (cada push publica `X.Y.Z-beta-SNAPSHOT`); quando estiver
+validado, suba a versão no `pom.xml` para `X.Y.Z` e faça merge na `main`. O push na `main`
+assina, publica no Maven Central, cria a tag `vX.Y.Z` e o GitHub Release — a publicação
+espera sua aprovação no environment `production`.
+
+O processo completo (namespace, GPG, secrets e consumo do beta) está em
 [`RELEASING.md`](RELEASING.md).
