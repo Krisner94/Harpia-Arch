@@ -63,8 +63,10 @@ Também é possível herdar somente o POM de build, sem as dependências de apli
 ## Links
 
 - **Documentação:** https://krisner94.github.io/Harpia-Arch/
-- **Maven Repository:** https://mvnrepository.com/artifact/io.github.krisner94/harpia-core
-- **Maven Central:** https://central.sonatype.com/artifact/io.github.krisner94/harpia-core
+- **Maven Central (oficial):** https://central.sonatype.com/artifact/io.github.krisner94/harpia-core
+- **Versões (oficial):** https://central.sonatype.com/artifact/io.github.krisner94/harpia-core/versions
+- **Maven Repository (índice de terceiros):** https://mvnrepository.com/artifact/io.github.krisner94/harpia-core
+- **Javadoc:** https://javadoc.io/doc/io.github.krisner94/harpia-core/1.0.0
 - **Releases:** https://github.com/Krisner94/Harpia-Arch/releases
 - **Canais de publicação (estável e beta):** [RELEASING.md](RELEASING.md)
 
