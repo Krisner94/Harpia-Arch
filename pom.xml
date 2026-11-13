@@ -44,7 +44,6 @@
     </modules>
 
     <properties>
-        <harpia.version>1.0.0</harpia.version>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -53,6 +52,12 @@
         <openapi-generator.version>7.4.0</openapi-generator.version>
         <build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
         <surefire-plugin.version>3.5.6</surefire-plugin.version>
+
+        <!-- Central Portal publishing (consumed by the release profile) -->
+        <central.autoPublish>true</central.autoPublish>
+        <central.waitUntil>published</central.waitUntil>
+        <central.waitMaxTime>3600</central.waitMaxTime>
+        <gpg.skip>false</gpg.skip>
 
         <!-- OpenAPI contract generation -->
         <harpia.openapi.spec>${project.basedir}/src/main/resources/openapi/openapi.yaml</harpia.openapi.spec>
@@ -73,7 +78,7 @@
             <dependency>
                 <groupId>io.github.krisner94</groupId>
                 <artifactId>harpia-core</artifactId>
-                <version>${harpia.version}</version>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -213,6 +218,12 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
                         <version>3.2.8</version>
+                        <configuration>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -230,7 +241,9 @@
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
-                            <autoPublish>false</autoPublish>
+                            <autoPublish>${central.autoPublish}</autoPublish>
+                            <waitUntil>${central.waitUntil}</waitUntil>
+                            <waitMaxTime>${central.waitMaxTime}</waitMaxTime>
                         </configuration>
                     </plugin>
                 </plugins>

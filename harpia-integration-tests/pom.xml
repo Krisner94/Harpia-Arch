@@ -15,6 +15,11 @@
     <name>Harpia Arch - Integration Tests</name>
     <description>Quarkus integration tests for Harpia Arch with Hibernate ORM and H2.</description>
 
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <skipPublishing>true</skipPublishing>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -35,7 +40,6 @@
                 </property>
             </activation>
             <properties>
-        <maven.deploy.skip>true</maven.deploy.skip>
                 <skipITs>false</skipITs>
             </properties>
             <build>

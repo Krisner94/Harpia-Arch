@@ -1,6 +1,17 @@
-# Publicação no Maven Central
+# Publicação
 
-Os artefatos publicados são:
+O projeto tem dois canais de distribuição, ambos automatizados por GitHub Actions:
+
+| Canal | Ambiente | Versão | Destino | Definitivo? |
+|---|---|---|---|---|
+| **Beta** | testes | `X.Y.Z-beta-SNAPSHOT` | [Central snapshots](https://central.sonatype.com/repository/maven-snapshots/) | não |
+| **Release** | produção | `X.Y.Z` | [Maven Central](https://repo1.maven.org/maven2/io/github/krisner94/) | sim |
+
+O canal beta é disparado automaticamente a cada push na `main` (workflow `Beta (snapshot)`).
+O canal de produção é disparado manualmente (workflow `Release`) e exige aprovação no
+environment `production` antes de qualquer coisa sair do GitHub.
+
+## Artefatos publicados
 
 | Artefato | Tipo |
 |---|---|
@@ -9,18 +20,110 @@ Os artefatos publicados são:
 | `io.github.krisner94:harpia-core` | Extensão Quarkus (runtime) |
 | `io.github.krisner94:harpia-core-deployment` | Extensão Quarkus (deployment) |
 
-`harpia-integration-tests` e `harpia-benchmarks` não são publicados
+`harpia-integration-tests` e `harpia-benchmarks` nunca são publicados
 (`maven.deploy.skip=true`).
 
-## Pré-requisitos
+---
 
-1. Conta no [Central Portal](https://central.sonatype.com/).
-2. Namespace `io.github.krisner94` verificado. Para `io.github.*`, a verificação é feita
+## Configuração inicial (uma vez)
+
+### 1. Namespace no Central Portal
+
+1. Crie a conta em <https://central.sonatype.com/>.
+2. Verifique o namespace `io.github.krisner94`. Para `io.github.*`, a verificação é feita
    vinculando a conta do GitHub `Krisner94`.
-3. Chave GPG com chave pública publicada em `keys.openpgp.org`.
-4. Token do Central Portal configurado no `~/.m2/settings.xml`.
+3. Em **Account → Generate User Token**, gere o token (usuário + senha).
 
-Exemplo de `~/.m2/settings.xml`:
+### 2. Chave GPG
+
+A chave usada hoje é:
+
+```
+3885F07BB8ADA7B3  Rhama Krisner <rhamakrisner@gmail.com>
+```
+
+A chave pública precisa estar publicada:
+
+```bash
+gpg --keyserver keys.openpgp.org --send-keys 3885F07BB8ADA7B3
+```
+
+O Central exige que os artefatos sejam assinados; o workflow importa a chave privada dos
+secrets e assina com `MAVEN_GPG_PASSPHRASE`.
+
+### 3. Secrets do repositório
+
+```bash
+gh secret set CENTRAL_USERNAME   # usuário do token do Central Portal
+gh secret set CENTRAL_PASSWORD   # senha do token
+gh secret set GPG_PASSPHRASE     # passphrase da chave (vazio se não houver)
+
+# chave privada exportada em ASCII armor
+gpg --armor --export-secret-keys 3885F07BB8ADA7B3 | gh secret set GPG_PRIVATE_KEY
+
+# opcional: força a chave correta se houver mais de uma no keyring
+gh secret set GPG_KEY_ID --body 3885F07BB8ADA7B3
+```
+
+Ou rode o script que faz tudo de uma vez:
+
+```bash
+./scripts/setup-release-env.sh
+```
+
+### 4. Environment `production` com aprovação obrigatória
+
+O job de publicação usa o environment `production`. Para exigir aprovação manual:
+
+```bash
+./scripts/setup-release-env.sh
+```
+
+ou manualmente em **Settings → Environments → New environment → `production`** e marque
+**Required reviewers** com o seu usuário.
+
+Sem revisores configurados, o job roda direto após o disparo.
+
+---
+
+## Como lançar uma versão (produção)
+
+1. GitHub → **Actions** → **Release** → **Run workflow**:
+   - `version`: a versão a publicar, ex.: `1.0.0` (sem `-SNAPSHOT`);
+   - `next_version`: opcional; por padrão o workflow sobe o patch para `X.Y.(Z+1)-SNAPSHOT`;
+   - `dry_run`: marque para apenas buildar e testar.
+2. O job **Build and test** roda antes de qualquer aprovação.
+3. O job **Publish** fica em *Waiting for approval*. Aprove em **Review deployments**.
+4. O workflow então:
+   - assina e publica os artefatos no Maven Central (`autoPublish=true`);
+   - espera o Central terminar a publicação;
+   - cria a tag `vX.Y.Z` e o GitHub Release com as notas geradas;
+   - commita a próxima versão de desenvolvimento (`chore: start X.Y.Z-SNAPSHOT ...`).
+
+Em alguns minutos os artefatos ficam disponíveis em:
+
+```
+https://repo1.maven.org/maven2/io/github/krisner94/harpia-core/X.Y.Z/
+```
+
+### Antes de disparar
+
+- a `main` precisa estar verde no CI;
+- a versão não pode já existir (o workflow falha se a tag `vX.Y.Z` existir);
+- para versões `X.Y.Z`, o Maven Central é imutável: erros de metadata não podem ser
+  corrigidos na mesma versão, só em uma nova.
+
+### Releases locais (sem GitHub Actions)
+
+```bash
+# a chave tem passphrase: exporte-a para assinar
+export MAVEN_GPG_PASSPHRASE='...'
+
+mvn -Prelease verify -Dgpg.skip=true                        # valida o pacote
+mvn -Prelease deploy -DskipITs                              # publica (precisa de ~/.m2/settings.xml)
+```
+
+`~/.m2/settings.xml` com o server `central`:
 
 ```xml
 <settings>
@@ -34,57 +137,64 @@ Exemplo de `~/.m2/settings.xml`:
 </settings>
 ```
 
-O usuário e a senha são o **token** gerado em Central Portal → Account → Generate User Token.
-
-## Chave GPG
-
-A chave local é:
-
-```
-3885F07BB8ADA7B3  Rhama Krisner <rhamakrisner@gmail.com>
-```
-
-Publique a chave pública:
+Para publicar sem auto-publish (revisar o bundle no portal antes):
 
 ```bash
-gpg --keyserver keys.openpgp.org --send-keys 3885F07BB8ADA7B3
+mvn -Prelease deploy -DskipITs -Dcentral.autoPublish=false
 ```
 
-Se a chave tiver passphrase, deixe o `gpg-agent` cachear ou use:
+---
 
-```bash
-mvn -Prelease -Dgpg.passphrase='...' ...
+## Como consumir o beta
+
+Quem quiser testar o snapshot mais recente da `main` adiciona o repositório de snapshots
+e usa a versão `X.Y.Z-beta-SNAPSHOT`:
+
+```xml
+<repositories>
+    <repository>
+        <id>central-snapshots</id>
+        <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+</repositories>
+
+<parent>
+    <groupId>io.github.krisner94</groupId>
+    <artifactId>harpia-quarkus</artifactId>
+    <version>1.0.0-beta-SNAPSHOT</version>
+</parent>
 ```
 
-## Validar o pacote antes de publicar
+Para atualizar o snapshot local: `mvn -U clean verify`.
 
-```bash
-mvn -Prelease -DskipTests -Dgpg.skip=true package
-```
+O snapshot é sobrescrito a cada push na `main`; ele não é uma versão estável e não deve ser
+usado em produção.
 
-Isso gera os JARs de sources e Javadoc sem assinar.
+---
 
-## Publicar
+## Fluxo de versões
 
-```bash
-mvn -Prelease -DskipTests deploy \
-  -pl .,harpia-core,harpia-core-deployment,harpia-quarkus
-```
-
-O `autoPublish` está como `false`: o bundle é enviado para o Central Portal e precisa ser
-publicado manualmente em **Deployments → Publish**.
-
-Depois da publicação, os artefatos ficam disponíveis em:
+A versão de desenvolvimento vive apenas no `<version>` do `pom.xml` raiz — os módulos herdam
+via `<parent>` e a dependência interna usa `${project.version}`.
 
 ```
-https://repo1.maven.org/maven2/io/github/krisner94/
+1.0.1-SNAPSHOT  --push na main-->  1.0.1-beta-SNAPSHOT  (canal beta)
+1.0.1-SNAPSHOT  --Release 1.0.1--> 1.0.1               (Maven Central)
+                                     |
+                                     +--> bump automático para 1.0.2-SNAPSHOT
 ```
 
-## Próxima versão
+Para uma versão minor/major, informe `next_version` no disparo (ex.: `1.1.0-SNAPSHOT`).
 
-O projeto está em `1.0.0`. Para uma nova release:
+## Problemas comuns
 
-1. atualize `<version>` no `pom.xml` raiz;
-2. atualize `<harpia.version>`;
-3. atualize a versão do parent nos módulos;
-4. rode novamente o comando de publicação.
+| Sintoma | Causa provável |
+|---|---|
+| `401 Unauthorized` no deploy | secrets `CENTRAL_USERNAME`/`CENTRAL_PASSWORD` ausentes ou token expirado |
+| `Invalid signature` / `gpg: signing failed` | `GPG_PRIVATE_KEY`/`GPG_PASSPHRASE` incorretos ou chave pública não publicada |
+| `Component already published` | a versão já existe no Central; publique outra |
+| `Deployment failed: missing sources/javadoc` | o perfil `-Prelease` não foi usado |
+| Job de publish esperando para sempre | environment `production` sem revisor aprovado |
