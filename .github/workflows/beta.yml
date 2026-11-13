@@ -73,6 +73,16 @@ jobs:
             printf '    </server>\n  </servers>\n</settings>\n'
           } > "$HOME/.m2/settings.xml"
 
+      - name: Diagnostic credentials
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+        run: |
+          echo "user_len=${#CENTRAL_USERNAME} pass_len=${#CENTRAL_PASSWORD}"
+          printf '%s' "$CENTRAL_USERNAME" | sha256sum | cut -c1-16
+          printf '%s' "$CENTRAL_PASSWORD" | sha256sum | cut -c1-16
+          sha256sum "$HOME/.m2/settings.xml" | cut -c1-16
+
       - name: Resolve beta version
         id: version
         run: |
