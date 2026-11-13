@@ -73,24 +73,10 @@ jobs:
             printf '    </server>\n  </servers>\n</settings>\n'
           } > "$HOME/.m2/settings.xml"
 
-      - name: Diagnostic credentials
-        env:
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
-        run: |
-          echo "user_len=${#CENTRAL_USERNAME} pass_len=${#CENTRAL_PASSWORD}"
-          printf '%s' "$CENTRAL_USERNAME" | sha256sum | cut -c1-16
-          printf '%s' "$CENTRAL_PASSWORD" | sha256sum | cut -c1-16
-          sha256sum "$HOME/.m2/settings.xml" | cut -c1-16
-          mvn -v | head -2
-          PROBE="https://central.sonatype.com/repository/maven-snapshots/io/github/krisner94/zz-probe/1.0.0-SNAPSHOT/zz-probe-1.0.0-20261113.120000-1.pom"
-          echo "probe_put=$(curl -s -o /dev/null -w '%{http_code}' -X PUT -u "$CENTRAL_USERNAME:$CENTRAL_PASSWORD" --data-binary x "$PROBE")"
-          echo "probe_api=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $(printf '%s:%s' "$CENTRAL_USERNAME" "$CENTRAL_PASSWORD" | base64 -w0)" 'https://central.sonatype.com/api/v1/publisher/published?namespace=io.github.krisner94&name=harpia-core&version=1.0.0')"
-
       - name: Resolve beta version
         id: version
         run: |
-          BASE=$(mvn -B -q -DforceStdout help:evaluate -Dexpression=project.version | tail -n 1)
+          BASE=$(./mvnw -B -q -DforceStdout help:evaluate -Dexpression=project.version | tail -n 1)
           BASE=${BASE%-SNAPSHOT}
           BASE=${BASE%-beta}
           BETA="${BASE}-beta-SNAPSHOT"
@@ -100,14 +86,14 @@ jobs:
 
       - name: Set beta version
         run: |
-          mvn -B -ntp versions:set \
+          ./mvnw -B -ntp versions:set \
             -DnewVersion="${{ steps.version.outputs.beta }}" \
             -DgenerateBackupPoms=false \
             -DprocessAllModules=true
 
       - name: Deploy to Central snapshots
         run: |
-          mvn -B -ntp -Prelease deploy \
+          ./mvnw -B -ntp -Prelease deploy \
             -Dgpg.skip=true \
             -Dmaven.javadoc.skip=true \
             -DskipITs

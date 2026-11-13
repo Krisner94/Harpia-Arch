@@ -117,12 +117,16 @@ https://repo1.maven.org/maven2/io/github/krisner94/harpia-core/X.Y.Z/
 
 ### Releases locais (sem GitHub Actions)
 
+Use sempre o wrapper (`./mvnw`), que fixa o Maven 3.9.16. O Maven 3.10 não envia as
+credenciais do `settings.xml` no deploy para o repositório de snapshots e o resultado é
+`401 Unauthorized`.
+
 ```bash
 # a chave tem passphrase: exporte-a para assinar
 export MAVEN_GPG_PASSPHRASE='...'
 
-mvn -Prelease verify -Dgpg.skip=true                        # valida o pacote
-mvn -Prelease deploy -DskipITs                              # publica (precisa de ~/.m2/settings.xml)
+./mvnw -Prelease verify -Dgpg.skip=true                        # valida o pacote
+./mvnw -Prelease deploy -DskipITs                              # publica (precisa de ~/.m2/settings.xml)
 ```
 
 `~/.m2/settings.xml` com o server `central`:
@@ -145,7 +149,7 @@ mvn -Prelease deploy -DskipITs                              # publica (precisa d
 Para publicar sem auto-publish (revisar o bundle no portal antes):
 
 ```bash
-mvn -Prelease deploy -DskipITs -Dcentral.autoPublish=false
+./mvnw -Prelease deploy -DskipITs -Dcentral.autoPublish=false
 ```
 
 ---

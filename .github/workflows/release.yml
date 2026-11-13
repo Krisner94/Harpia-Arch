@@ -71,13 +71,13 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          mvn -B -ntp versions:set \
+          ./mvnw -B -ntp versions:set \
             -DnewVersion="$VERSION" \
             -DgenerateBackupPoms=false \
             -DprocessAllModules=true
 
       - name: Verify release profile
-        run: mvn -B -ntp -Prelease verify -Dgpg.skip=true -DskipITs
+        run: ./mvnw -B -ntp -Prelease verify -Dgpg.skip=true -DskipITs
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
@@ -141,7 +141,7 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          mvn -B -ntp versions:set \
+          ./mvnw -B -ntp versions:set \
             -DnewVersion="$VERSION" \
             -DgenerateBackupPoms=false \
             -DprocessAllModules=true
@@ -154,7 +154,7 @@ jobs:
           if [ -n "$GPG_KEY_ID" ]; then
             KEY_ARG="-Dgpg.keyname=$GPG_KEY_ID"
           fi
-          mvn -B -ntp -Prelease deploy -DskipITs $KEY_ARG
+          ./mvnw -B -ntp -Prelease deploy -DskipITs $KEY_ARG
 
       - name: Create tag and GitHub Release
         env:
@@ -185,7 +185,7 @@ jobs:
             NEXT_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))-SNAPSHOT"
           fi
           echo "Próxima versão de desenvolvimento: $NEXT_VERSION"
-          mvn -B -ntp versions:set \
+          ./mvnw -B -ntp versions:set \
             -DnewVersion="$NEXT_VERSION" \
             -DgenerateBackupPoms=false \
             -DprocessAllModules=true

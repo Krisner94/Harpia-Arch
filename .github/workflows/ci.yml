@@ -34,7 +34,7 @@ jobs:
           cache: maven
 
       - name: Verify (unit + integration tests)
-        run: mvn -B -ntp -Dit verify
+        run: ./mvnw -B -ntp -Dit verify
 
       - name: Publish test report
         if: always()
