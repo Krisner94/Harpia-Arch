@@ -65,19 +65,13 @@ jobs:
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
         run: |
           mkdir -p "$HOME/.m2"
-          cat > "$HOME/.m2/settings.xml" <<'XML'
-          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
-            <servers>
-              <server>
-                <id>central</id>
-                <username>${env.CENTRAL_USERNAME}</username>
-                <password>${env.CENTRAL_PASSWORD}</password>
-              </server>
-            </servers>
-          </settings>
-          XML
+          {
+            printf '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">\n'
+            printf '  <servers>\n    <server>\n      <id>central</id>\n'
+            printf '      <username>%s</username>\n' "$CENTRAL_USERNAME"
+            printf '      <password>%s</password>\n' "$CENTRAL_PASSWORD"
+            printf '    </server>\n  </servers>\n</settings>\n'
+          } > "$HOME/.m2/settings.xml"
 
       - name: Resolve beta version
         id: version

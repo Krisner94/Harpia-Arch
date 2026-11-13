@@ -33,6 +33,8 @@ environment `production` antes de qualquer coisa sair do GitHub.
 2. Verifique o namespace `io.github.krisner94`. Para `io.github.*`, a verificação é feita
    vinculando a conta do GitHub `Krisner94`.
 3. Em **Account → Generate User Token**, gere o token (usuário + senha).
+4. Habilite o canal beta: em **Namespaces**, abra o menu do namespace `io.github.krisner94` e
+   escolha **Enable SNAPSHOTs**. Sem isso o workflow Beta falha com `403 Forbidden`.
 
 ### 2. Chave GPG
 
@@ -130,12 +132,15 @@ mvn -Prelease deploy -DskipITs                              # publica (precisa d
     <servers>
         <server>
             <id>central</id>
-            <username>${env.CENTRAL_USERNAME}</username>
-            <password>${env.CENTRAL_PASSWORD}</password>
+            <username>SEU_USUARIO_DO_TOKEN</username>
+            <password>SUA_SENHA_DO_TOKEN</password>
         </server>
     </servers>
 </settings>
 ```
+
+> Use os valores literais. `${env.VAR}` **não** é interpolado nesse ponto e o deploy falha
+> com `401 Unauthorized`.
 
 Para publicar sem auto-publish (revisar o bundle no portal antes):
 
