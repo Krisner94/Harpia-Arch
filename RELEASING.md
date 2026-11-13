@@ -177,8 +177,10 @@ usado em produção.
 
 ## Fluxo de versões
 
-A versão de desenvolvimento vive apenas no `<version>` do `pom.xml` raiz — os módulos herdam
-via `<parent>` e a dependência interna usa `${project.version}`.
+A versão de desenvolvimento vive no `pom.xml` raiz: os módulos herdam via `<parent>` e a
+dependência interna em `<dependencyManagement>` usa a versão literal (não `${project.version}`,
+porque um parent publicado é interpolado no contexto do app consumidor). `mvn versions:set`
+atualiza os três pontos de uma vez.
 
 ```
 1.0.1-SNAPSHOT  --push na main-->  1.0.1-beta-SNAPSHOT  (canal beta)

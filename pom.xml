@@ -78,7 +78,10 @@
             <dependency>
                 <groupId>io.github.krisner94</groupId>
                 <artifactId>harpia-core</artifactId>
-                <version>${project.version}</version>
+                <!-- Literal de propósito: um parent publicado e herdado por aplicações
+                     resolve ${project.version} no contexto do app consumidor. Mantido
+                     em sincronia pelo versions:set nos workflows. -->
+                <version>1.0.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
