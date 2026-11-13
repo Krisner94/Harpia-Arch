@@ -5,25 +5,16 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.krisner94/harpia-core)](https://central.sonatype.com/artifact/io.github.krisner94/harpia-core)
 [![Docs](https://img.shields.io/badge/docs-krisner94.github.io-blue)](https://krisner94.github.io/Harpia-Arch/)
 
-[Documentação completa](https://krisner94.github.io/Harpia-Arch/)
+Engine de workflows tipado e validação arquitetural em build time para aplicações Quarkus,
+com OpenAPI contract-first. Sem reflexão, sem runtime mágico — o contrato é verificado durante
+o build.
 
-Base Maven para aplicações Quarkus com **OpenAPI contract-first** e o núcleo de workflows
-[`harpia-core`](harpia-core/README.md).
+**Requisitos:** Java 25 e Quarkus 3.40+.
 
-O repositório é um agregador com seis módulos:
+## Instalação
 
-| Módulo | Papel |
-|---|---|
-| `harpia-arch` | Pai de build: Quarkus BOM, versões, `openapi-generator-maven-plugin` e o perfil de codegen. |
-| `harpia-quarkus` | Pai das aplicações Quarkus: dependências comuns, plugins e perfil `native`. |
-| `harpia-core` | Núcleo: `FlowItem`, `Workflow`, `FlowBuilder`, exceptions e annotations CDI. |
-| `harpia-core-deployment` | Validação da arquitetura em build time (Jandex + `@BuildStep`). |
-| `harpia-integration-tests` | Aplicação Quarkus de teste: Hibernate ORM, H2, REST e Native Image. |
-| `harpia-benchmarks` | Benchmarks JMH do motor de workflows. |
-
-## Uso
-
-A aplicação usa **`harpia-quarkus`** como pai. O POM fica só com a identidade do serviço:
+O jeito recomendado é usar `harpia-quarkus` como parent. Ele já traz o Quarkus BOM, as
+dependências comuns, os plugins de build e o perfil `native`:
 
 ```xml
 <parent>
@@ -38,384 +29,45 @@ A aplicação usa **`harpia-quarkus`** como pai. O POM fica só com a identidade
 <packaging>quarkus</packaging>
 ```
 
-Nada de BOM, versões de plugin, dependências de REST, JUnit ou Rest Assured no POM da aplicação.
-
-O `harpia-quarkus` já fornece:
-
-- Quarkus BOM e a versão do Quarkus;
-- `quarkus-arc`, `quarkus-rest` e `quarkus-rest-jackson`;
-- `microprofile-openapi-api` e `jakarta.validation-api`, usados pelo código gerado;
-- `harpia-core` (engine de workflows + annotations);
-- `quarkus-junit` e Rest Assured em escopo de teste;
-- `quarkus-maven-plugin` com `extensions=true`;
-- `maven-compiler-plugin` (Java 25, `-parameters`) e `maven-surefire-plugin`;
-- perfil `native` com `maven-failsafe-plugin`, `quarkus.native.enabled` e `skipITs=false`;
-- o perfil `harpia-openapi-codegen`, ativado quando existe `src/main/resources/openapi`.
-
-A aplicação só declara o que é específico dela: dependências extras, propriedades do contrato e
-configuração de runtime.
-
-> `packaging=quarkus` é obrigatório: é o lifecycle do Quarkus que executa `generate-code` e
-> `build`. Não declare o `quarkus-maven-plugin` nem os plugins de compilação/teste no POM da
-> aplicação.
-
-## Annotations
-
-Todas as annotations ficam em `io.github.krisner94.harpia.annotation` e já vêm pelo
-`harpia-quarkus`. Detalhes em [`harpia-core/README.md`](harpia-core/README.md).
-
-| Annotation | Papel | CDI |
-|---|---|---|
-| `@HarpiaApplication` | Classe principal da aplicação. | Marker |
-| `@Controller` | Adapter de entrada HTTP. | `@ApplicationScoped` |
-| `@Service` | Regras de negócio. | `@ApplicationScoped` |
-| `@Repository` | Persistência. | `@ApplicationScoped` |
-| `@Activity` | Etapa de um workflow. | `@ApplicationScoped` |
-| `@WorkflowDefinition` | Workflow que declara as Activities. | `@ApplicationScoped` |
-| `@Component` | Componente genérico. | `@ApplicationScoped` |
-
-```java
-import io.github.krisner94.harpia.annotation.Controller;
-import io.github.krisner94.harpia.annotation.Service;
-import io.github.krisner94.harpia.annotation.Activity;
-import io.github.krisner94.harpia.annotation.WorkflowDefinition;
-```
-
-A annotation de workflow é `@WorkflowDefinition` porque Java não permite uma annotation e uma
-classe com o mesmo nome simples (`Workflow<I, C, O>`) no mesmo escopo. Ela representa o
-`@Workflow` previsto nas diretrizes.
-
-## Validação em build
-
-`harpia-core` é uma extensão Quarkus: o `harpia-core-deployment` roda durante o build e falha a
-aplicação antes de gerar o artefato quando uma regra é violada.
-
-| Regra | Erro |
-|---|---|
-| `@Activity` implementa `FlowItem` | `@Activity ... must implement FlowItem` |
-| `@WorkflowDefinition` estende `Workflow` | `@WorkflowDefinition ... must extend Workflow` |
-| `@Controller` não implementa `FlowItem` | `@Controller ... must not implement FlowItem` |
-| `@Controller` não declara `@Path`/verbos | `@Controller ... must not declare @Path` |
-| `@Activity` não declara `@Path`/verbos | `@Activity ... must not declare GET` |
-| `@Repository` não depende de `@Controller` | `@Repository ... must not depend on @Controller` |
-| Uma única `@HarpiaApplication` | `Only one @HarpiaApplication is allowed` |
-
-Exemplo de falha:
-
-```text
-[error]: Build step io.github.krisner94.harpia.deployment.HarpiaArchProcessor#validateArchitecture
-threw an exception: java.lang.IllegalStateException: @Activity apurair.workflow.InvalidActivity
-must implement io.github.krisner94.harpia.core.FlowItem
-```
-
-Nenhuma configuração é necessária: o Quarkus resolve o artefato de deployment a partir do
-`harpia-core`.
-
-## Contrato
-
-Por padrão, o contrato deve estar em:
-
-```text
-src/main/resources/openapi/openapi.yaml
-```
-
-```yaml
-openapi: 3.0.3
-info:
-  title: Pets API
-  version: "1.0"
-paths:
-  /pets/{petId}:
-    get:
-      operationId: getPetById
-      parameters:
-        - name: petId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Pet encontrado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pet'
-components:
-  schemas:
-    Pet:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-```
-
-Com esse contrato, o gerador cria:
-
-```text
-target/generated-sources/openapi/src/main/java/com/acme/api/PetsApi.java
-target/generated-sources/openapi/src/main/java/com/acme/api/beans/*.java
-```
-
-O nome da interface é o primeiro segmento do path + o sufixo configurado. O `Resource` do
-gerador anterior não é mais usado.
-
-### Propriedades
-
-| Propriedade | Default | Descrição |
-|---|---|---|
-| `harpia.openapi.spec` | `${project.basedir}/src/main/resources/openapi/openapi.yaml` | Arquivo OpenAPI de entrada |
-| `harpia.openapi.api-package` | `${project.groupId}.api` | Pacote das interfaces geradas |
-| `harpia.openapi.model-package` | `${harpia.openapi.api-package}.beans` | Pacote dos DTOs gerados |
-| `harpia.openapi.api-suffix` | `Api` | Sufixo do nome das interfaces geradas |
-
-Exemplo para trocar o sufixo e o arquivo:
+Se você já usa outro parent, adicione apenas o núcleo:
 
 ```xml
-<properties>
-    <harpia.openapi.spec>${project.basedir}/src/main/resources/openapi/pets.yaml</harpia.openapi.spec>
-    <harpia.openapi.api-suffix>Contract</harpia.openapi.api-suffix>
-</properties>
+<dependency>
+    <groupId>io.github.krisner94</groupId>
+    <artifactId>harpia-core</artifactId>
+    <version>1.0.0</version>
+</dependency>
 ```
 
-O perfil `harpia-openapi-codegen` só é ativado quando existe o diretório
-`src/main/resources/openapi`, para que o POM pai e projetos sem contrato não executem o gerador.
+Também é possível herdar somente o POM de build, sem as dependências de aplicação:
 
-## Implementação do contrato
-
-O gerador produz **interfaces**, não controllers. Basta implementar a interface como um bean CDI:
-
-```java
-@ApplicationScoped
-public class PetsController implements PetsApi {
-
-    @Override
-    public Pet getPetById(String petId) {
-        Pet pet = new Pet();
-        pet.setId(petId);
-        pet.setName("Rex");
-        return pet;
-    }
-}
+```xml
+<parent>
+    <groupId>io.github.krisner94</groupId>
+    <artifactId>harpia-arch</artifactId>
+    <version>1.0.0</version>
+</parent>
 ```
 
-A rota, os verbos e os parâmetros vêm exclusivamente da interface gerada. Não é necessário
-repetir `@Path` no controller.
+## Módulos
 
-## Build
+| Módulo | Papel | Publicado |
+|---|---|---|
+| `harpia-quarkus` | Parent das aplicações: Quarkus BOM, REST, OpenAPI, testes e plugin nativo. | sim |
+| `harpia-arch` | Parent de build: versões, `openapi-generator-maven-plugin` e perfil de codegen. | sim |
+| `harpia-core` | Núcleo: `FlowItem`, `Workflow`, `FlowBuilder`, annotations CDI e validações. | sim |
+| `harpia-core-deployment` | Validação da arquitetura em build time (Jandex + `@BuildStep`). | sim |
+| `harpia-integration-tests` | Aplicação Quarkus usada pelos testes de integração. | não |
+| `harpia-benchmarks` | Benchmarks JMH do motor de workflows. | não |
 
-```bash
-mvn install
-```
+## Links
 
-## IDE
+- **Documentação:** https://krisner94.github.io/Harpia-Arch/
+- **Maven Repository:** https://mvnrepository.com/artifact/io.github.krisner94/harpia-core
+- **Maven Central:** https://central.sonatype.com/artifact/io.github.krisner94/harpia-core
+- **Releases:** https://github.com/Krisner94/Harpia-Arch/releases
+- **Canais de publicação (estável e beta):** [RELEASING.md](RELEASING.md)
 
-O código gerado fica em:
+## Licença
 
-```text
-target/generated-sources/openapi/src/main/java
-```
-
-Esse diretório é adicionado como source root pelo `build-helper-maven-plugin`. Depois de rodar
-`mvn generate-sources`, recarregue o projeto Maven na IDE. Se a IDE ainda não indexar a pasta,
-marque-a como **Generated Sources Root** (ou **Sources Root**).
-
-Este POM é apenas configuração. Para um projeto que já usa outro pai Maven, copie as propriedades,
-o plugin `openapi-generator-maven-plugin` e o perfil `harpia-openapi-codegen` para o POM da
-aplicação.
-
-## Núcleo de workflows
-
-O engine fica em `harpia-core` e já vem como dependência do `harpia-quarkus`.
-
-```java
-@WorkflowDefinition
-public class CreateCustomerWorkflow extends Workflow<CustomerInput, CustomerContext, Customer> {
-
-    private final ValidationWorkflow validation;
-    private final PersistenceWorkflow persistence;
-
-    public CreateCustomerWorkflow(ValidationWorkflow validation, PersistenceWorkflow persistence) {
-        this.validation = validation;
-        this.persistence = persistence;
-    }
-
-    @Override
-    protected void configure() {
-        flowBuilder = FlowBuilder.builder(CustomerInput.class, CustomerContext.class)
-                .step(validation)
-                .step(persistence)
-                .build();
-    }
-}
-```
-
-- `Workflow` implementa `FlowItem`, então um workflow pode ser etapa de outro;
-- a declaração usa exclusivamente `.step()` e termina com `.build()`;
-- a composição é construída uma única vez, no `@PostConstruct`;
-- tipos incompatíveis entre etapas não compilam;
-- contexto diferente em um subworkflow exige `adaptContext(...)` explícito;
-- não há reflexão, `Object` ou cast no encadeamento.
-
-### Contexto opcional
-
-O contexto não é obrigatório. É possível usar `Void` explicitamente ou omitir o contexto com
-`SimpleFlowItem`/`SimpleWorkflow`:
-
-```java
-// Sem declaração de Context
-@Activity
-public class TrimCustomerNameActivity
-        implements SimpleFlowItem<CustomerInput, CustomerInput> {
-
-    @Override
-    public CustomerInput execute(CustomerInput input) {
-        return new CustomerInput(input.name().trim());
-    }
-}
-```
-
-```java
-@WorkflowDefinition
-public class CreateCustomerWorkflow extends SimpleWorkflow<CustomerInput, Customer> {
-
-    @Override
-    protected void configure() {
-        flowBuilder = FlowBuilder.builder(CustomerInput.class)
-                .step(trim)
-                .step(persist)
-                .build();
-    }
-}
-```
-
-Também é possível manter o contrato de três parâmetros com `Void`:
-
-```java
-FlowItem<CustomerInput, Void, CustomerInput>
-Workflow<Void, Void, List<Customer>>
-```
-
-O contexto recebido é sempre `null`, sem criar objeto de contexto. `SimpleFlowItem` e
-`SimpleWorkflow` são necessários porque Java não permite sobrecarregar `FlowItem`/`Workflow` pelo
-número de parâmetros genéricos mantendo o mesmo nome. Atividades sem contexto podem ser usadas em
-workflows com contexto; o contexto é ignorado pela etapa e continua disponível para as seguintes.
-
-## Build e testes
-
-```bash
-mvn install
-```
-
-O comando instala todos os módulos e executa:
-
-- testes unitários e de composição do `harpia-core`;
-- validação arquitetural e teste CDI do `harpia-core-deployment`;
-- teste de integração JVM com Hibernate ORM + H2 do `harpia-integration-tests`.
-
-Comandos isolados:
-
-```bash
-mvn -pl harpia-core test
-mvn -pl harpia-core-deployment test
-mvn -pl harpia-integration-tests test
-```
-
-### Teste de integração `@QuarkusIntegrationTest`
-
-```bash
-mvn -pl harpia-integration-tests verify -Dit
-```
-
-Empacota a aplicação e executa o teste HTTP contra o artefato.
-
-### Native Image
-
-Requer GraalVM com `native-image`:
-
-```bash
-export GRAALVM_HOME=/caminho/para/graalvm
-export JAVA_HOME=$GRAALVM_HOME
-export PATH=$GRAALVM_HOME/bin:$PATH
-
-mvn -pl harpia-integration-tests verify -Dnative
-```
-
-O build nativo compila a aplicação com Hibernate ORM + H2 e executa o
-`CustomerWorkflowIT` contra o executável nativo.
-
-### Benchmarks
-
-```bash
-mvn -pl harpia-benchmarks -am package
-java -jar harpia-benchmarks/target/harpia-benchmarks.jar
-```
-
-Para inspecionar alocações:
-
-```bash
-java -jar harpia-benchmarks/target/harpia-benchmarks.jar -prof gc
-```
-
-Resultado de referência nesta máquina (3 warmups, 5 medições de 500 ms):
-
-| Benchmark | Custo |
-|---|---|
-| Chamada direta (`IntUnaryOperator`) | 0.44 ns/op |
-| `FlowItem` simples | 0.44 ns/op |
-| Activity única composta | 1.79 ns/op |
-| Workflow com 3 etapas | 5.00 ns/op |
-| Workflow com 16 etapas | 58.08 ns/op |
-| 3 subworkflows (9 etapas) | 56.65 ns/op |
-| Construção de uma composição de 3 etapas | 9.69 ns/op, 80 B/op |
-
-Os números são específicos do ambiente; use `-prof gc` e mais iterações para análises
-comparativas.
-
-### Documentação
-
-O site de documentação usa Docusaurus 3 e fica em `website/`.
-
-```bash
-cd website
-npm install
-npm start
-```
-
-O servidor local fica em `http://localhost:3000/Harpia-Arch/`. Para gerar o build estático:
-
-```bash
-cd website
-npm run build
-```
-
-O deploy no GitHub Pages é feito pelo workflow `.github/workflows/docs.yml` a cada push em
-`website/**`.
-
-## Maven Central
-
-Canais de distribuição, ambos automatizados por GitHub Actions:
-
-| Canal | Versão | Destino | Quando |
-|---|---|---|---|
-| **release** | `1.0.0` | [Maven Central](https://repo1.maven.org/maven2/io/github/krisner94/) | push/merge na `main`, com aprovação |
-| **beta** | `1.0.0-beta-SNAPSHOT` | [Central snapshots](https://central.sonatype.com/repository/maven-snapshots/) | a cada push na branch `beta` |
-
-Artefatos publicados:
-
-```text
-io.github.krisner94:harpia-core
-io.github.krisner94:harpia-core-deployment
-io.github.krisner94:harpia-quarkus
-io.github.krisner94:harpia-arch
-```
-
-Fluxo: trabalhe na branch `beta` (cada push publica `X.Y.Z-beta-SNAPSHOT`); quando estiver
-validado, suba a versão no `pom.xml` para `X.Y.Z` e faça merge na `main`. O push na `main`
-assina, publica no Maven Central, cria a tag `vX.Y.Z` e o GitHub Release — a publicação
-espera sua aprovação no environment `production`.
-
-O processo completo (namespace, GPG, secrets e consumo do beta) está em
-[`RELEASING.md`](RELEASING.md).
+[Apache License 2.0](LICENSE)
