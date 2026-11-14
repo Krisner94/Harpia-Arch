@@ -11,9 +11,12 @@ Tudo é fornecido automaticamente pelo parent `harpia-quarkus`.
 
 | Tipo | Papel |
 |---|---|
-| `FlowItem<I, C, O>` | Contrato de execução. Activities e Workflows implementam. |
+| `FlowItem<I, C, O>` | Contrato de execução com contexto. Activities e Workflows implementam. |
+| `SimpleFlowItem<I, O>` | Contrato de execução sem contexto. |
 | `Workflow<I, C, O>` | Composição imutável que também é um `FlowItem`. |
+| `SimpleWorkflow<I, O>` | Workflow sem declaração de contexto. |
 | `FlowBuilder` | Builder tipado; a única operação de composição é `.step()`. |
+| `SimpleFlowBuilder` | Builder tipado sem contexto, acionado por `builder(Class)`. |
 | `FlowConfigurationException` | Falha de configuração do workflow. |
 
 ```java
@@ -68,6 +71,44 @@ flowBuilder = FlowBuilder.builder(CustomerInput.class, CustomerContext.class)
 
 Cada subworkflow tem seus próprios tipos de entrada, contexto e saída.
 
+### Contexto opcional
+
+O contexto pode ser omitido com `SimpleFlowItem`/`SimpleWorkflow`:
+
+```java
+@Activity
+public class TrimCustomerNameActivity implements SimpleFlowItem<CustomerInput, CustomerInput> {
+
+    @Override
+    public CustomerInput execute(CustomerInput input) {
+        return new CustomerInput(input.name().trim());
+    }
+}
+```
+
+```java
+flowBuilder = FlowBuilder.builder(CustomerInput.class)
+        .step(trim)
+        .step(persist)
+        .build();
+```
+
+Também é possível manter o contrato de três parâmetros com `Void`:
+
+```java
+FlowItem<CustomerInput, Void, CustomerInput>
+Workflow<Void, Void, List<Customer>>
+```
+
+O contexto recebido é sempre `null`, sem criar objeto de contexto. `SimpleFlowItem` e
+`SimpleWorkflow` existem porque Java não permite sobrecarregar `FlowItem`/`Workflow` pelo número de
+parâmetros genéricos mantendo o mesmo nome.
+
+Atividades sem contexto podem ser usadas em workflows com contexto; o contexto é ignorado pela
+etapa e continua disponível para as seguintes. Um componente que exige contexto só entra em fluxo
+sem contexto via `adaptContext(...)` explícito. Não há conversão implícita entre contextos nem
+casts.
+
 ### Contextos diferentes
 
 A adaptação é explícita e tipada; não existe conversão implícita:
@@ -102,7 +143,8 @@ A garantia é de compilação; por type erasure não há verificação em runtim
 - `flowBuilder` é publicado como `volatile` e nunca é reconstruído;
 - Workflows instanciados manualmente inicializam na primeira execução;
 - o contexto é sempre parâmetro de `execute`; não há estado de requisição em campos de beans;
-- a execução não usa reflexão, proxies dinâmicos ou descoberta de componentes.
+- a execução não usa reflexão, descoberta dinâmica de componentes nem resolução dinâmica de
+  contexto; o ArC pode usar proxies CDI, mas o motor não depende deles.
 
 ## Annotations
 
@@ -125,11 +167,11 @@ A garantia é de compilação; por type erasure não há verificação em runtim
 | Annotation | Regra |
 |---|---|
 | `@HarpiaApplication` | Uma única classe por aplicação, normalmente a `@QuarkusMain`. |
-| `@Controller` | Implementa a interface gerada pelo contrato OpenAPI; não declara `@Path` nem verbos HTTP; não implementa `FlowItem`. |
+| `@Controller` | Implementa a interface gerada pelo contrato OpenAPI; não declara `@Path` nem verbos HTTP; não implementa `FlowItem` nem `SimpleFlowItem`. |
 | `@Service` | Não expõe endpoints e não depende de controllers. |
 | `@Repository` | Não depende de controllers, services ou activities. |
-| `@Activity` | Implementa `FlowItem<I, C, O>`; responsabilidade única; não expõe endpoints; não conhece a estrutura do workflow. |
-| `@WorkflowDefinition` | Estende `Workflow<I, C, O>`; apenas declara os steps em `configure()`. |
+| `@Activity` | Implementa `FlowItem<I, C, O>` ou `SimpleFlowItem<I, O>`; responsabilidade única; não expõe endpoints; não conhece a estrutura do workflow. |
+| `@WorkflowDefinition` | Estende `Workflow<I, C, O>` ou `SimpleWorkflow<I, O>`; apenas declara os steps em `configure()`. |
 | `@Component` | Uso genérico, quando nenhum papel específico se aplica. |
 
 As regras são validadas em build time pelo módulo `harpia-core-deployment` (Jandex + `@BuildStep`).
