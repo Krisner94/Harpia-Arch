@@ -6,9 +6,11 @@ import io.smallrye.config.ConfigValue;
 import org.eclipse.microprofile.config.spi.ConfigSource;
 
 import java.util.List;
+import java.util.ServiceLoader;
 
 /**
- * Registra o {@link OciVaultConfigSource} quando o Vault está habilitado.
+ * Registra o {@link VaultConfigSource} quando o Vault está habilitado, escolhendo o
+ * {@link SecretResolver} pelo provedor configurado em {@code harpia.vault.provider}.
  *
  * <p>Ativação (qualquer uma):</p>
  * <ul>
@@ -16,15 +18,16 @@ import java.util.List;
  *   <li>perfil {@code local} ativo (conveniência para desenvolvimento).</li>
  * </ul>
  *
- * <p>Configuração (não-secreta):</p>
+ * <p>Configuração genérica (pode viver no {@code bootstrap.yaml}):</p>
  * <ul>
- *   <li>{@code harpia.vault.compartment-ocid} — compartimento do Vault (obrigatório);</li>
+ *   <li>{@code harpia.vault.provider} — provedor (padrão: {@code oci});</li>
  *   <li>{@code harpia.vault.secret-prefix} — prefixo do nome dos secrets (padrão: {@code quarkus.application.name});</li>
- *   <li>{@code harpia.vault.profile} — perfil do {@code ~/.oci/config} (padrão: {@code DEFAULT});</li>
- *   <li>{@code harpia.vault.config-file} — caminho do arquivo de config OCI (padrão: local padrão do SDK).</li>
  * </ul>
+ *
+ * <p>A configuração específica de cada provedor (ex.: {@code harpia.vault.oci.*}) é lida pela
+ * própria implementação do {@link SecretResolver}.</p>
  */
-public class OciVaultConfigSourceFactory implements ConfigSourceFactory {
+public class VaultConfigSourceFactory implements ConfigSourceFactory {
 
     @Override
     public Iterable<ConfigSource> getConfigSources(ConfigSourceContext context) {
@@ -36,11 +39,17 @@ public class OciVaultConfigSourceFactory implements ConfigSourceFactory {
             return List.of();
         }
 
-        String compartment = value(context, "harpia.vault.compartment-ocid");
-        if (compartment == null || compartment.isBlank()) {
-            System.err.println("[harpia-vault] desativado: 'harpia.vault.compartment-ocid' nao configurado");
+        String provider = value(context, "harpia.vault.provider");
+        if (provider == null || provider.isBlank()) {
+            provider = "oci";
+        }
+
+        SecretResolver resolver = loadResolver(provider);
+        if (resolver == null) {
+            System.err.println("[harpia-vault] provedor '" + provider + "' nao encontrado no classpath");
             return List.of();
         }
+        resolver.configure(context);
 
         String prefix = value(context, "harpia.vault.secret-prefix");
         if (prefix == null || prefix.isBlank()) {
@@ -50,14 +59,16 @@ public class OciVaultConfigSourceFactory implements ConfigSourceFactory {
             prefix = "";
         }
 
-        String profile = value(context, "harpia.vault.profile");
-        if (profile == null || profile.isBlank()) {
-            profile = "DEFAULT";
+        return List.of(new VaultConfigSource(prefix, resolver));
+    }
+
+    private static SecretResolver loadResolver(String provider) {
+        for (SecretResolver resolver : ServiceLoader.load(SecretResolver.class)) {
+            if (resolver.provider().equalsIgnoreCase(provider)) {
+                return resolver;
+            }
         }
-
-        String configFile = value(context, "harpia.vault.config-file");
-
-        return List.of(new OciVaultConfigSource(prefix, compartment, profile, configFile));
+        return null;
     }
 
     private static String value(ConfigSourceContext context, String name) {

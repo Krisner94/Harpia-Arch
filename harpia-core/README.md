@@ -177,27 +177,40 @@ A garantia é de compilação; por type erasure não há verificação em runtim
 As regras são validadas em build time pelo módulo `harpia-core-deployment` (Jandex + `@BuildStep`).
 Uma violação falha o build com a classe e a regra quebrada na mensagem.
 
-## OCI Vault
+## Vault de segredos (provider-agnóstico)
 
-`OciVaultConfigSource` resolve chaves no formato `<AMBIENTE>_DB_<CAMPO>` (ex.: `HML_DB_URL`)
-buscando o valor no OCI Vault pelo secret `<prefixo>-<ambiente>-db-<campo>`. Assim o
-`application.yaml` pode usar `${HML_DB_URL}` sem nunca expor URL, usuário ou senha — o valor é
-lido do Vault no boot.
+`VaultConfigSource` resolve chaves no formato `<AMBIENTE>_DB_<CAMPO>` (ex.: `HML_DB_URL`)
+buscando o valor num cofre de segredos pelo secret `<prefixo>-<ambiente>-db-<campo>`. Assim o
+`application.yaml` pode usar `${HML_DB_URL}` sem nunca expor URL, usuário ou senha.
 
-Ativação (qualquer uma):
+O provedor é plugável via SPI (`SecretResolver`): OCI Vault, OpenBao/HashiCorp Vault, AWS
+Secrets Manager, etc. Basta trocar a configuração — o provedor é descoberto por
+`ServiceLoader` e escolhido por `harpia.vault.provider`.
 
-- `harpia.vault.enabled=true`;
-- perfil `local` ativo.
-
-Configuração (não-secreta):
+Configuração (pode viver num `bootstrap.yaml` carregado via `quarkus.config.locations`):
 
 | Propriedade | Padrão | Uso |
 |---|---|---|
-| `harpia.vault.compartment-ocid` | — (obrigatória) | compartimento do Vault |
+| `harpia.vault.enabled` | `false` | ativa a busca de segredos (ou perfil `local`) |
+| `harpia.vault.provider` | `oci` | provedor a usar (`oci`, `openbao`, `aws`, ...) |
 | `harpia.vault.secret-prefix` | `quarkus.application.name` | prefixo do nome dos secrets |
-| `harpia.vault.profile` | `DEFAULT` | perfil do `~/.oci/config` |
-| `harpia.vault.config-file` | local padrão do SDK | caminho do arquivo de config OCI |
+| `harpia.vault.oci.compartment-ocid` | — (obrigatória p/ OCI) | compartimento do Vault |
+| `harpia.vault.oci.profile` | `DEFAULT` | perfil do `~/.oci/config` |
+| `harpia.vault.oci.config-file` | local padrão do SDK | caminho do arquivo de config OCI |
 
-O SDK OCI é **opcional**: aplicações que usam o Vault declaram
+Exemplo de `bootstrap.yaml`:
+
+```yaml
+harpia:
+  vault:
+    provider: oci
+    secret-prefix: user-info
+    oci:
+      compartment-ocid: ocid1.compartment.oc1..aaaa...
+```
+
+O SDK OCI é **opcional**: aplicações que usam o provedor `oci` declaram
 `com.oracle.oci.sdk:oci-java-sdk-common`, `oci-java-sdk-vault`, `oci-java-sdk-secrets` e
-`oci-java-sdk-common-httpclient-jersey3`.
+`oci-java-sdk-common-httpclient-jersey3`. Para criar um novo provedor, implemente
+`SecretResolver` e registre em
+`META-INF/services/io.github.krisner94.harpia.vault.SecretResolver`.
