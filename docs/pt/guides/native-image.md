@@ -46,7 +46,7 @@ class CustomerWorkflowIT {
 Resultado de referência:
 
 ```text
-Finished generating 'harpia-integration-tests-1.0.0-SNAPSHOT-runner' in 4m 27s
+Finished generating 'harpia-integration-tests-1.2.0-SNAPSHOT-runner' in 4m 27s
 
 harpia-integration-tests native started in 0.033s
 Installed features: [agroal, cdi, harpia-arch, hibernate-orm, jdbc-h2,

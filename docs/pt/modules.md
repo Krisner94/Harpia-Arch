@@ -4,10 +4,10 @@
 
 | Coordenada | Tipo | Consumo |
 |---|---|---|
-| `io.github.krisner94:harpia-arch:1.0.0` | POM | Parent de build da biblioteca |
-| `io.github.krisner94:harpia-quarkus:1.0.0` | POM | **Parent recomendado para aplicações** |
-| `io.github.krisner94:harpia-core:1.0.0` | JAR | Engine, annotations e stereotypes |
-| `io.github.krisner94:harpia-core-deployment:1.0.0` | JAR | Validação em build time (automático) |
+| `io.github.krisner94:harpia-arch:1.2.0` | POM | Parent de build da biblioteca |
+| `io.github.krisner94:harpia-quarkus:1.2.0` | POM | **Parent recomendado para aplicações** |
+| `io.github.krisner94:harpia-core:1.2.0` | JAR | Engine, annotations e stereotypes |
+| `io.github.krisner94:harpia-core-deployment:1.2.0` | JAR | Validação em build time (automático) |
 
 ## Relação entre os módulos
 
@@ -33,7 +33,7 @@ Use como parent da aplicação:
 <parent>
     <groupId>io.github.krisner94</groupId>
     <artifactId>harpia-quarkus</artifactId>
-    <version>1.0.0</version>
+    <version>1.2.0</version>
 </parent>
 ```
 
@@ -55,7 +55,7 @@ Use como dependência quando a aplicação já tem outro parent:
 <dependency>
     <groupId>io.github.krisner94</groupId>
     <artifactId>harpia-core</artifactId>
-    <version>1.0.0</version>
+    <version>1.2.0</version>
 </dependency>
 ```
 
@@ -92,7 +92,7 @@ use `harpia-quarkus`.
 
 ## Versão e Java
 
-- Versão atual: `1.0.0`.
+- Versão atual: `1.2.0`.
 - Java: 25.
 - Quarkus: 3.40+.
 - GroupId: `io.github.krisner94`.

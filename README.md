@@ -9,6 +9,10 @@ Engine de workflows tipado e validação arquitetural em build time para aplica�
 com OpenAPI contract-first. Sem reflexão, sem runtime mágico — o contrato é verificado durante
 o build.
 
+Inclui ainda um **vault de segredos provider-agnóstico**: resolva credenciais (`${HML_DB_URL}`
+etc.) de OCI Vault, OpenBao, HashiCorp Vault, Azure, AWS ou GCP direto no boot, sem expor senha
+em código. Veja [`harpia-core/README.md`](harpia-core/README.md).
+
 **Requisitos:** Java 25 e Quarkus 3.40+.
 
 ## Instalação
@@ -20,7 +24,7 @@ dependências comuns, os plugins de build e o perfil `native`:
 <parent>
     <groupId>io.github.krisner94</groupId>
     <artifactId>harpia-quarkus</artifactId>
-    <version>1.0.0</version>
+    <version>1.2.0</version>
 </parent>
 
 <groupId>com.acme</groupId>
@@ -35,7 +39,7 @@ Se você já usa outro parent, adicione apenas o núcleo:
 <dependency>
     <groupId>io.github.krisner94</groupId>
     <artifactId>harpia-core</artifactId>
-    <version>1.0.0</version>
+    <version>1.2.0</version>
 </dependency>
 ```
 
@@ -45,7 +49,7 @@ Também é possível herdar somente o POM de build, sem as dependências de apli
 <parent>
     <groupId>io.github.krisner94</groupId>
     <artifactId>harpia-arch</artifactId>
-    <version>1.0.0</version>
+    <version>1.2.0</version>
 </parent>
 ```
 
@@ -66,7 +70,7 @@ Também é possível herdar somente o POM de build, sem as dependências de apli
 - **Maven Central (oficial):** https://central.sonatype.com/artifact/io.github.krisner94/harpia-core
 - **Versões (oficial):** https://central.sonatype.com/artifact/io.github.krisner94/harpia-core/versions
 - **Maven Repository (índice de terceiros):** https://mvnrepository.com/artifact/io.github.krisner94/harpia-core
-- **Javadoc:** https://javadoc.io/doc/io.github.krisner94/harpia-core/1.0.0
+- **Javadoc:** https://javadoc.io/doc/io.github.krisner94/harpia-core/1.2.0
 - **Releases:** https://github.com/Krisner94/Harpia-Arch/releases
 - **Canais de publicação (estável e beta):** [RELEASING.md](RELEASING.md)
 

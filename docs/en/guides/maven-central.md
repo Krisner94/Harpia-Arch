@@ -3,10 +3,10 @@
 ## Coordinates
 
 ```text
-io.github.krisner94:harpia-arch:1.0.0
-io.github.krisner94:harpia-quarkus:1.0.0
-io.github.krisner94:harpia-core:1.0.0
-io.github.krisner94:harpia-core-deployment:1.0.0
+io.github.krisner94:harpia-arch:1.2.0
+io.github.krisner94:harpia-quarkus:1.2.0
+io.github.krisner94:harpia-core:1.2.0
+io.github.krisner94:harpia-core-deployment:1.2.0
 ```
 
 `harpia-integration-tests` and `harpia-benchmarks` are not published.
@@ -73,7 +73,7 @@ Deployments -> select the bundle -> Publish
 ## Verify
 
 ```bash
-curl -I https://repo1.maven.org/maven2/io/github/krisner94/harpia-core/1.0.0/harpia-core-1.0.0.pom
+curl -I https://repo1.maven.org/maven2/io/github/krisner94/harpia-core/1.2.0/harpia-core-1.2.0.pom
 ```
 
 Propagation may take a few minutes.

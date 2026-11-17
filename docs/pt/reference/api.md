@@ -4,8 +4,8 @@ A documentação Javadoc é publicada junto com os artefatos.
 
 ## Javadoc
 
-- [`harpia-core`](https://javadoc.io/doc/io.github.krisner94/harpia-core/1.0.0/)
-- [`harpia-core-deployment`](https://javadoc.io/doc/io.github.krisner94/harpia-core-deployment/1.0.0/)
+- [`harpia-core`](https://javadoc.io/doc/io.github.krisner94/harpia-core/1.2.0/)
+- [`harpia-core-deployment`](https://javadoc.io/doc/io.github.krisner94/harpia-core-deployment/1.2.0/)
 
 > Os links ficam disponíveis após a publicação da versão no Maven Central.
 

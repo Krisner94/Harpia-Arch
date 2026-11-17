@@ -44,7 +44,7 @@ flowchart LR
 <parent>
     <groupId>io.github.krisner94</groupId>
     <artifactId>harpia-quarkus</artifactId>
-    <version>1.0.0</version>
+    <version>1.2.0</version>
 </parent>
 ```
 

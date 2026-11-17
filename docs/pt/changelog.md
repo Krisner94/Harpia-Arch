@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.2.0
+
+### Vault de segredos (provider-agnóstico)
+
+- SPI `SecretResolver` — plugue qualquer backend de segredos (OCI Vault, OpenBao, HashiCorp Vault, Azure, AWS, GCP);
+- `VaultConfigSource` resolve `<AMBIENTE>_DB_<CAMPO>` em `<prefixo>-<ambiente>-db-<campo>`;
+- provedor selecionado por `harpia.vault.provider`;
+- configuração de bootstrap em `bootstrap.yaml` (carregado por `quarkus.config.locations`);
+- SDK OCI mantido como dependência opcional (apenas o provedor `oci` exige).
+
+## 1.1.0
+
+### OCI Vault
+
+- `OciVaultConfigSource` + `OciVaultConfigSourceFactory`;
+- resolve credenciais de banco no OCI Vault no boot;
+- ativado por `harpia.vault.enabled` ou pelo perfil `local`.
+
 ## 1.0.0
 
 ### Engine
