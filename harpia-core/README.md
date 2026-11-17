@@ -176,3 +176,28 @@ A garantia é de compilação; por type erasure não há verificação em runtim
 
 As regras são validadas em build time pelo módulo `harpia-core-deployment` (Jandex + `@BuildStep`).
 Uma violação falha o build com a classe e a regra quebrada na mensagem.
+
+## OCI Vault
+
+`OciVaultConfigSource` resolve chaves no formato `<AMBIENTE>_DB_<CAMPO>` (ex.: `HML_DB_URL`)
+buscando o valor no OCI Vault pelo secret `<prefixo>-<ambiente>-db-<campo>`. Assim o
+`application.yaml` pode usar `${HML_DB_URL}` sem nunca expor URL, usuário ou senha — o valor é
+lido do Vault no boot.
+
+Ativação (qualquer uma):
+
+- `harpia.vault.enabled=true`;
+- perfil `local` ativo.
+
+Configuração (não-secreta):
+
+| Propriedade | Padrão | Uso |
+|---|---|---|
+| `harpia.vault.compartment-ocid` | — (obrigatória) | compartimento do Vault |
+| `harpia.vault.secret-prefix` | `quarkus.application.name` | prefixo do nome dos secrets |
+| `harpia.vault.profile` | `DEFAULT` | perfil do `~/.oci/config` |
+| `harpia.vault.config-file` | local padrão do SDK | caminho do arquivo de config OCI |
+
+O SDK OCI é **opcional**: aplicações que usam o Vault declaram
+`com.oracle.oci.sdk:oci-java-sdk-common`, `oci-java-sdk-vault`, `oci-java-sdk-secrets` e
+`oci-java-sdk-common-httpclient-jersey3`.

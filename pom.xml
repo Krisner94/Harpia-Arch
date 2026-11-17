@@ -5,7 +5,7 @@
 
     <groupId>io.github.krisner94</groupId>
     <artifactId>harpia-arch</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>pom</packaging>
     <name>Harpia Arch</name>
     <description>Contract-first OpenAPI code generation configuration for Quarkus applications.</description>
@@ -52,6 +52,7 @@
         <openapi-generator.version>7.4.0</openapi-generator.version>
         <build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
         <surefire-plugin.version>3.5.6</surefire-plugin.version>
+        <oci.sdk.version>3.101.0</oci.sdk.version>
 
         <!-- Central Portal publishing (consumed by the release profile) -->
         <central.autoPublish>true</central.autoPublish>
@@ -81,7 +82,7 @@
                 <!-- Literal de propósito: um parent publicado e herdado por aplicações
                      resolve ${project.version} no contexto do app consumidor. Mantido
                      em sincronia pelo versions:set nos workflows. -->
-                <version>1.0.0</version>
+                <version>1.1.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
