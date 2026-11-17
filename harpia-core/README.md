@@ -183,22 +183,41 @@ Uma violação falha o build com a classe e a regra quebrada na mensagem.
 buscando o valor num cofre de segredos pelo secret `<prefixo>-<ambiente>-db-<campo>`. Assim o
 `application.yaml` pode usar `${HML_DB_URL}` sem nunca expor URL, usuário ou senha.
 
-O provedor é plugável via SPI (`SecretResolver`): OCI Vault, OpenBao/HashiCorp Vault, AWS
-Secrets Manager, etc. Basta trocar a configuração — o provedor é descoberto por
-`ServiceLoader` e escolhido por `harpia.vault.provider`.
+O provedor é plugável via SPI (`SecretResolver`), descoberto por `ServiceLoader` e escolhido
+por `harpia.vault.provider`. A configuração vive num `bootstrap.yaml` carregado por
+`quarkus.config.locations=bootstrap.yaml`.
 
-Configuração (pode viver num `bootstrap.yaml` carregado via `quarkus.config.locations`):
+### Mapeamento de chave → secret (igual para todos os provedores)
 
-| Propriedade | Padrão | Uso |
-|---|---|---|
-| `harpia.vault.enabled` | `false` | ativa a busca de segredos (ou perfil `local`) |
-| `harpia.vault.provider` | `oci` | provedor a usar (`oci`, `openbao`, `aws`, ...) |
-| `harpia.vault.secret-prefix` | `quarkus.application.name` | prefixo do nome dos secrets |
-| `harpia.vault.oci.compartment-ocid` | — (obrigatória p/ OCI) | compartimento do Vault |
-| `harpia.vault.oci.profile` | `DEFAULT` | perfil do `~/.oci/config` |
-| `harpia.vault.oci.config-file` | local padrão do SDK | caminho do arquivo de config OCI |
+| Placeholder no `application.yaml` | Nome do secret buscado |
+|---|---|
+| `${HML_DB_URL}` | `<secret-prefix>-hml-db-url` |
+| `${HML_DB_USERNAME}` | `<secret-prefix>-hml-db-username` |
+| `${HML_DB_PASSWORD}` | `<secret-prefix>-hml-db-password` |
+| `${PRD_DB_URL}` | `<secret-prefix>-prd-db-url` |
 
-Exemplo de `bootstrap.yaml`:
+Regra: `<AMBIENTE>_DB_<CAMPO>` → `<secret-prefix>-<ambiente>-db-<campo>` (tudo em minúsculas).
+
+### Configuração genérica
+
+| Propriedade | Padrão | Obrigatória | Uso |
+|---|---|---|---|
+| `harpia.vault.enabled` | `false` | não | ativa a busca (ou perfil `local`) |
+| `harpia.vault.provider` | `oci` | não | qual provedor usar |
+| `harpia.vault.secret-prefix` | `quarkus.application.name` | não | prefixo do nome dos secrets |
+
+As demais propriedades são específicas de cada provedor, sob o prefixo
+`harpia.vault.<provider>.*`.
+
+---
+
+### OCI Vault (Oracle) — `provider: oci` (implementado)
+
+| Propriedade | Padrão | Obrigatória | Uso |
+|---|---|---|---|
+| `harpia.vault.oci.compartment-ocid` | — | **sim** | OCID do compartimento onde estão os secrets |
+| `harpia.vault.oci.profile` | `DEFAULT` | não | perfil do `~/.oci/config` |
+| `harpia.vault.oci.config-file` | local padrão do SDK | não | caminho do arquivo de config OCI |
 
 ```yaml
 harpia:
@@ -209,8 +228,116 @@ harpia:
       compartment-ocid: ocid1.compartment.oc1..aaaa...
 ```
 
-O SDK OCI é **opcional**: aplicações que usam o provedor `oci` declaram
-`com.oracle.oci.sdk:oci-java-sdk-common`, `oci-java-sdk-vault`, `oci-java-sdk-secrets` e
-`oci-java-sdk-common-httpclient-jersey3`. Para criar um novo provedor, implemente
-`SecretResolver` e registre em
-`META-INF/services/io.github.krisner94.harpia.vault.SecretResolver`.
+Autenticação: API key do `~/.oci/config` (user principal). Dependências (SDK OCI, opcional no
+`harpia-core`): `oci-java-sdk-common`, `oci-java-sdk-vault`, `oci-java-sdk-secrets` e
+`oci-java-sdk-common-httpclient-jersey3`.
+
+---
+
+### OpenBao — `provider: openbao` (planejado)
+
+| Propriedade | Padrão | Obrigatória | Uso |
+|---|---|---|---|
+| `harpia.vault.openbao.address` | — | **sim** | URL do servidor (ex.: `https://bao.seudominio.com:8200`) |
+| `harpia.vault.openbao.token` | — | uma das formas | autenticação por token |
+| `harpia.vault.openbao.role-id` | — | uma das formas | AppRole: `role_id` |
+| `harpia.vault.openbao.secret-id` | — | uma das formas | AppRole: `secret_id` |
+| `harpia.vault.openbao.path` | `secret` | não | mount path do KV engine |
+| `harpia.vault.openbao.kv-version` | `2` | não | versão do KV engine (`1` ou `2`) |
+| `harpia.vault.openbao.namespace` | — | não | namespace (Enterprise) |
+
+```yaml
+harpia:
+  vault:
+    provider: openbao
+    openbao:
+      address: https://bao.seudominio.com:8200
+      role-id: ${OPENBAO_ROLE_ID}
+      secret-id: ${OPENBAO_SECRET_ID}
+      path: secret
+```
+
+---
+
+### HashiCorp Vault — `provider: vault` (planejado)
+
+Mesma API do OpenBao; chaves sob `harpia.vault.vault.*`:
+
+| Propriedade | Padrão | Obrigatória | Uso |
+|---|---|---|---|
+| `harpia.vault.vault.address` | — | **sim** | URL do servidor Vault |
+| `harpia.vault.vault.token` | — | uma das formas | autenticação por token |
+| `harpia.vault.vault.role-id` | — | uma das formas | AppRole: `role_id` |
+| `harpia.vault.vault.secret-id` | — | uma das formas | AppRole: `secret_id` |
+| `harpia.vault.vault.path` | `secret` | não | mount path do KV engine |
+| `harpia.vault.vault.kv-version` | `2` | não | versão do KV engine |
+| `harpia.vault.vault.namespace` | — | não | namespace (Enterprise) |
+
+---
+
+### Azure Key Vault — `provider: azure` (planejado)
+
+| Propriedade | Padrão | Obrigatória | Uso |
+|---|---|---|---|
+| `harpia.vault.azure.key-vault-url` | — | **sim** | `https://<nome>.vault.azure.net` |
+| `harpia.vault.azure.tenant-id` | — | sim (service principal) | tenant do Entra ID |
+| `harpia.vault.azure.client-id` | — | sim (service principal) | client id |
+| `harpia.vault.azure.client-secret` | — | sim (service principal) | client secret |
+
+> Com managed identity, omita `tenant-id`/`client-id`/`client-secret` e use o
+> `DefaultAzureCredential`.
+
+```yaml
+harpia:
+  vault:
+    provider: azure
+    azure:
+      key-vault-url: https://meu-vault.vault.azure.net
+      tenant-id: ${AZURE_TENANT_ID}
+      client-id: ${AZURE_CLIENT_ID}
+      client-secret: ${AZURE_CLIENT_SECRET}
+```
+
+---
+
+### AWS Secrets Manager — `provider: aws` (planejado)
+
+| Propriedade | Padrão | Obrigatória | Uso |
+|---|---|---|---|
+| `harpia.vault.aws.region` | — | **sim** | região (ex.: `us-east-1`) |
+| `harpia.vault.aws.access-key-id` | — | não | credencial (senão usa a default chain) |
+| `harpia.vault.aws.secret-access-key` | — | não | credencial |
+| `harpia.vault.aws.profile` | `default` | não | perfil do `~/.aws/credentials` |
+
+```yaml
+harpia:
+  vault:
+    provider: aws
+    aws:
+      region: us-east-1
+```
+
+---
+
+### GCP Secret Manager — `provider: gcp` (planejado)
+
+| Propriedade | Padrão | Obrigatória | Uso |
+|---|---|---|---|
+| `harpia.vault.gcp.project-id` | — | **sim** | projeto GCP |
+| `harpia.vault.gcp.credentials` | — | não | JSON da service account (senão usa ADC) |
+
+```yaml
+harpia:
+  vault:
+    provider: gcp
+    gcp:
+      project-id: meu-projeto
+```
+
+---
+
+### Adicionando um novo provedor
+
+Implemente `SecretResolver` (lendo o próprio `harpia.vault.<provider>.*` no `configure()`) e
+registre em `META-INF/services/io.github.krisner94.harpia.vault.SecretResolver`. O núcleo não
+precisa ser alterado.
