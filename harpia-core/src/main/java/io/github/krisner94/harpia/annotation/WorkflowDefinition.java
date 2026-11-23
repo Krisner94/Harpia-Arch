@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * Identifies a workflow: the component that declares the order of activities.
  *
  * <p>Every class annotated with {@code @WorkflowDefinition} must extend
- * {@code io.github.krisner94.harpia.core.Workflow<I, C, O>}. The annotation is
+ * {@code io.github.krisner94.harpia.core.Workflow<I, O>}. The annotation is
  * named {@code WorkflowDefinition} because Java does not allow an annotation and
  * a class with the same simple name in the same scope.</p>
  *

@@ -23,7 +23,7 @@ public class CustomerResource {
 
     @POST
     public CustomerResponse create(CustomerRequest request) {
-        CustomerEntity customer = workflow.execute(request.name(), new CustomerContext());
+        CustomerEntity customer = workflow.execute(request.name());
         return new CustomerResponse(customer.getId(), customer.getName());
     }
 

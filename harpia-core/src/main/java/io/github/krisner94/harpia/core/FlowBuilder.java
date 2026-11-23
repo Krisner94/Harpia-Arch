@@ -11,34 +11,45 @@ import java.util.Objects;
  * compile.</p>
  *
  * @param <I> flow input
- * @param <C> execution context
  * @param <OUT> output of the last added unit
  */
-public final class FlowBuilder<I, C, OUT> {
+public final class FlowBuilder<I, OUT> {
 
-    private final Stage<I, C, OUT> stage;
-    private final int steps;
+    private final Stage<I, OUT> stage;
 
-    private FlowBuilder(Stage<I, C, OUT> stage, int steps) {
+    private FlowBuilder(Stage<I, OUT> stage) {
         this.stage = stage;
-        this.steps = steps;
     }
 
     /**
-     * Starts a composition.
+     * Starts a composition from a named unit.
      *
-     * <p>The class tokens anchor the generic types of the chain. They do not
-     * perform runtime type checks; the guarantee is enforced by the compiler.</p>
+     * <p>The input and output types are inferred from the unit, so no class
+     * token is required.</p>
+     *
+     * @param first first unit
+     * @param <I> flow input
+     * @param <O> output of the first unit
+     * @return a builder with the first step already added
+     */
+    public static <I, O> FlowBuilder<I, O> from(FlowItem<I, O> first) {
+        Objects.requireNonNull(first, "first");
+        return new FlowBuilder<>(first::execute);
+    }
+
+    /**
+     * Starts a composition anchoring the input type.
+     *
+     * <p>The class token anchors the generic input type of the chain for inline
+     * lambdas; it does not perform runtime type checks. The guarantee is enforced
+     * by the compiler.</p>
      *
      * @param inputType flow input type
-     * @param contextType execution context type
      * @param <I> flow input
-     * @param <C> execution context
      * @return the first element of the composition
      */
-    public static <I, C> Starter<I, C> builder(Class<I> inputType, Class<C> contextType) {
+    public static <I> Starter<I> builder(Class<I> inputType) {
         Objects.requireNonNull(inputType, "inputType");
-        Objects.requireNonNull(contextType, "contextType");
         return new Starter<>();
     }
 
@@ -49,12 +60,11 @@ public final class FlowBuilder<I, C, OUT> {
      * @param <O> output of the new unit
      * @return a new builder typed with the new output
      */
-    public <O> FlowBuilder<I, C, O> step(FlowItem<OUT, C, O> next) {
+    public <O> FlowBuilder<I, O> step(FlowItem<OUT, O> next) {
         Objects.requireNonNull(next, "next");
-        Stage<I, C, OUT> previous = stage;
-        Stage<I, C, O> composed = (input, context) ->
-                next.execute(previous.execute(input, context), context);
-        return new FlowBuilder<>(composed, steps + 1);
+        Stage<I, OUT> previous = stage;
+        Stage<I, O> composed = input -> next.execute(previous.execute(input));
+        return new FlowBuilder<>(composed);
     }
 
     /**
@@ -62,10 +72,7 @@ public final class FlowBuilder<I, C, OUT> {
      *
      * @return the executable flow
      */
-    public FlowItem<I, C, OUT> build() {
-        if (steps == 0) {
-            throw new FlowConfigurationException("A flow requires at least one step");
-        }
+    public FlowItem<I, OUT> build() {
         return stage::execute;
     }
 
@@ -73,9 +80,8 @@ public final class FlowBuilder<I, C, OUT> {
      * First element of the composition.
      *
      * @param <I> flow input
-     * @param <C> execution context
      */
-    public static final class Starter<I, C> {
+    public static final class Starter<I> {
 
         private Starter() {
         }
@@ -87,9 +93,9 @@ public final class FlowBuilder<I, C, OUT> {
          * @param <O> output of the first unit
          * @return a builder typed with the output of the first unit
          */
-        public <O> FlowBuilder<I, C, O> step(FlowItem<I, C, O> first) {
+        public <O> FlowBuilder<I, O> step(FlowItem<I, O> first) {
             Objects.requireNonNull(first, "first");
-            return new FlowBuilder<>(first::execute, 1);
+            return new FlowBuilder<>(first::execute);
         }
     }
 }

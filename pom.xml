@@ -5,7 +5,7 @@
 
     <groupId>io.github.krisner94</groupId>
     <artifactId>harpia-arch</artifactId>
-    <version>1.2.0</version>
+    <version>1.0.0</version>
     <packaging>pom</packaging>
     <name>Harpia Arch</name>
     <description>Contract-first OpenAPI code generation configuration for Quarkus applications.</description>
@@ -39,6 +39,7 @@
         <module>harpia-core</module>
         <module>harpia-core-deployment</module>
         <module>harpia-quarkus</module>
+        <module>harpia-cli</module>
         <module>harpia-integration-tests</module>
         <module>harpia-benchmarks</module>
     </modules>
@@ -82,7 +83,7 @@
                 <!-- Literal de propósito: um parent publicado e herdado por aplicações
                      resolve ${project.version} no contexto do app consumidor. Mantido
                      em sincronia pelo versions:set nos workflows. -->
-                <version>1.2.0</version>
+                <version>1.0.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

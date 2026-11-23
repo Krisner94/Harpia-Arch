@@ -3,7 +3,7 @@
 [![CI](https://github.com/Krisner94/Harpia-Arch/actions/workflows/ci.yml/badge.svg)](https://github.com/Krisner94/Harpia-Arch/actions/workflows/ci.yml)
 [![Release](https://github.com/Krisner94/Harpia-Arch/actions/workflows/release.yml/badge.svg)](https://github.com/Krisner94/Harpia-Arch/actions/workflows/release.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.krisner94/harpia-core)](https://central.sonatype.com/artifact/io.github.krisner94/harpia-core)
-[![Docs](https://img.shields.io/badge/docs-krisner94.github.io-blue)](https://krisner94.github.io/Harpia-Arch/)
+[![Docs](https://img.shields.io/badge/docs-krisner94.github.io-blue)](https://krisner94.github.io/Harpia-Arch-Docs/)
 
 Engine de workflows tipado e validação arquitetural em build time para aplicações Quarkus,
 com OpenAPI contract-first. Sem reflexão, sem runtime mágico — o contrato é verificado durante
@@ -24,7 +24,7 @@ dependências comuns, os plugins de build e o perfil `native`:
 <parent>
     <groupId>io.github.krisner94</groupId>
     <artifactId>harpia-quarkus</artifactId>
-    <version>1.2.0</version>
+    <version>1.0.0</version>
 </parent>
 
 <groupId>com.acme</groupId>
@@ -39,7 +39,7 @@ Se você já usa outro parent, adicione apenas o núcleo:
 <dependency>
     <groupId>io.github.krisner94</groupId>
     <artifactId>harpia-core</artifactId>
-    <version>1.2.0</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -49,7 +49,7 @@ Também é possível herdar somente o POM de build, sem as dependências de apli
 <parent>
     <groupId>io.github.krisner94</groupId>
     <artifactId>harpia-arch</artifactId>
-    <version>1.2.0</version>
+    <version>1.0.0</version>
 </parent>
 ```
 
@@ -59,18 +59,19 @@ Também é possível herdar somente o POM de build, sem as dependências de apli
 |---|---|---|
 | `harpia-quarkus` | Parent das aplicações: Quarkus BOM, REST, OpenAPI, testes e plugin nativo. | sim |
 | `harpia-arch` | Parent de build: versões, `openapi-generator-maven-plugin` e perfil de codegen. | sim |
-| `harpia-core` | Núcleo: `FlowItem`, `Workflow`, `FlowBuilder`, annotations CDI e validações. | sim |
+| `harpia-core` | Núcleo: `FlowItem`, `Workflow`, `FlowBuilder`, erros tipados (RFC 9457) e annotations CDI. | sim |
 | `harpia-core-deployment` | Validação da arquitetura em build time (Jandex + `@BuildStep`). | sim |
+| `harpia-cli` | CLI que gera um serviço a partir de um contrato OpenAPI. | sim |
 | `harpia-integration-tests` | Aplicação Quarkus usada pelos testes de integração. | não |
 | `harpia-benchmarks` | Benchmarks JMH do motor de workflows. | não |
 
 ## Links
 
-- **Documentação:** https://krisner94.github.io/Harpia-Arch/
+- **Documentação:** https://krisner94.github.io/Harpia-Arch-Docs/
 - **Maven Central (oficial):** https://central.sonatype.com/artifact/io.github.krisner94/harpia-core
 - **Versões (oficial):** https://central.sonatype.com/artifact/io.github.krisner94/harpia-core/versions
 - **Maven Repository (índice de terceiros):** https://mvnrepository.com/artifact/io.github.krisner94/harpia-core
-- **Javadoc:** https://javadoc.io/doc/io.github.krisner94/harpia-core/1.2.0
+- **Javadoc:** https://javadoc.io/doc/io.github.krisner94/harpia-core/1.0.0
 - **Releases:** https://github.com/Krisner94/Harpia-Arch/releases
 - **Canais de publicação (estável e beta):** [RELEASING.md](RELEASING.md)
 

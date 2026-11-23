@@ -20,7 +20,7 @@ class PersistCustomerWorkflowTest {
     @Test
     @Transactional
     void persistsCustomerThroughTheWorkflow() {
-        CustomerEntity customer = workflow.execute("Ana", new CustomerContext());
+        CustomerEntity customer = workflow.execute("Ana");
 
         assertNotNull(customer.getId());
         assertEquals("Ana", repository.findById(customer.getId()).getName());

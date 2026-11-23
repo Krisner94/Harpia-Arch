@@ -2,62 +2,45 @@ package io.github.krisner94.harpia.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class FlowBuilderTest {
 
     @Test
     void chainsUnitsInOrder() {
-        FlowItem<String, TestTrace, String> flow = FlowBuilder
-                .builder(String.class, TestTrace.class)
-                .step((input, context) -> {
-                    context.add("trim");
-                    return input.trim();
-                })
-                .step((input, context) -> {
-                    context.add("length");
-                    return input.length();
-                })
-                .step((length, context) -> {
-                    context.add("label");
-                    return "len=" + length;
-                })
+        FlowItem<String, String> flow = FlowBuilder.from((String input) -> input.trim())
+                .step(input -> input.length())
+                .step(length -> "len=" + length)
                 .build();
 
-        TestTrace context = new TestTrace();
-
-        assertEquals("len=5", flow.execute("  abcde  ", context));
-        assertEquals(List.of("trim", "length", "label"), context.steps());
+        assertEquals("len=5", flow.execute("  abcde  "));
     }
 
     @Test
     void executesSingleUnitFlow() {
-        FlowItem<Integer, TestTrace, Integer> flow = FlowBuilder
-                .builder(Integer.class, TestTrace.class)
-                .step((input, context) -> input * 2)
+        FlowItem<Integer, Integer> flow = FlowBuilder.from((Integer input) -> input * 2)
                 .build();
 
-        assertEquals(42, flow.execute(21, new TestTrace()));
+        assertEquals(42, flow.execute(21));
     }
 
     @Test
-    void sharesTheSameContextAcrossUnits() {
-        TestTrace context = new TestTrace();
-
-        FlowItem<String, TestTrace, String> flow = FlowBuilder
-                .builder(String.class, TestTrace.class)
-                .step((input, trace) -> {
-                    trace.add(input);
-                    return input.toUpperCase();
-                })
-                .step((input, trace) -> {
-                    trace.add(input);
-                    return String.join(",", trace.steps());
-                })
+    void anchorsInputTypeForInlineLambdas() {
+        FlowItem<String, String> flow = FlowBuilder.builder(String.class)
+                .step(input -> input.trim())
+                .step(input -> input.toUpperCase())
                 .build();
 
-        assertEquals("abc,ABC", flow.execute("abc", context));
-        assertEquals(List.of("abc", "ABC"), context.steps());
+        assertEquals("ABC", flow.execute("  abc  "));
+    }
+
+    @Test
+    void startsFromNamedUnitWithoutClassTokens() {
+        FlowItem<String, Integer> length = input -> input.length();
+
+        FlowItem<String, Integer> flow = FlowBuilder.from(length)
+                .build();
+
+        assertEquals(3, flow.execute("abc"));
     }
 }

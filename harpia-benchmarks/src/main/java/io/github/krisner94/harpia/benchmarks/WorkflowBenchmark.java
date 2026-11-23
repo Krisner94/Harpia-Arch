@@ -29,30 +29,25 @@ import org.openjdk.jmh.annotations.Warmup;
 @Fork(1)
 public class WorkflowBenchmark {
 
-    private static final Object CONTEXT = new Object();
-    private static final FlowItem<Integer, Object, Integer> INCREMENT =
-            (input, context) -> input + 1;
+    private static final FlowItem<Integer, Integer> INCREMENT = input -> input + 1;
     private static final java.util.function.IntUnaryOperator DIRECT = input -> input + 1;
-    private static final FlowItem<Integer, Object, Integer> PLAIN = INCREMENT;
+    private static final FlowItem<Integer, Integer> PLAIN = INCREMENT;
 
-    private FlowItem<Integer, Object, Integer> single;
-    private FlowItem<Integer, Object, Integer> few;
-    private FlowItem<Integer, Object, Integer> many;
-    private FlowItem<Integer, Object, Integer> nested;
-    private FlowItem<Integer, Object, Integer> nestedWorkflow;
+    private FlowItem<Integer, Integer> single;
+    private FlowItem<Integer, Integer> few;
+    private FlowItem<Integer, Integer> many;
+    private FlowItem<Integer, Integer> nested;
+    private FlowItem<Integer, Integer> nestedWorkflow;
 
     @Setup
     public void setup() {
-        single = FlowBuilder.builder(Integer.class, Object.class)
-                .step(INCREMENT)
+        single = FlowBuilder.from(INCREMENT)
                 .build();
-        few = FlowBuilder.builder(Integer.class, Object.class)
-                .step(INCREMENT)
+        few = FlowBuilder.from(INCREMENT)
                 .step(INCREMENT)
                 .step(INCREMENT)
                 .build();
-        many = FlowBuilder.builder(Integer.class, Object.class)
-                .step(INCREMENT)
+        many = FlowBuilder.from(INCREMENT)
                 .step(INCREMENT)
                 .step(INCREMENT)
                 .step(INCREMENT)
@@ -69,14 +64,12 @@ public class WorkflowBenchmark {
                 .step(INCREMENT)
                 .step(INCREMENT)
                 .build();
-        nestedWorkflow = new AddWorkflow(FlowBuilder.builder(Integer.class, Object.class)
-                .step(INCREMENT)
+        nestedWorkflow = new AddWorkflow(FlowBuilder.from(INCREMENT)
                 .step(INCREMENT)
                 .step(INCREMENT)
                 .step(INCREMENT)
                 .build());
-        nested = FlowBuilder.builder(Integer.class, Object.class)
-                .step(nestedWorkflow)
+        nested = FlowBuilder.from(nestedWorkflow)
                 .step(nestedWorkflow)
                 .step(nestedWorkflow)
                 .build();
@@ -84,7 +77,7 @@ public class WorkflowBenchmark {
 
     @Benchmark
     public int singleActivity() {
-        return single.execute(0, CONTEXT);
+        return single.execute(0);
     }
 
     @Benchmark
@@ -94,45 +87,43 @@ public class WorkflowBenchmark {
 
     @Benchmark
     public int plainFlowItem() {
-        return PLAIN.execute(0, CONTEXT);
+        return PLAIN.execute(0);
     }
 
     @Benchmark
     public int workflowWithThreeSteps() {
-        return few.execute(0, CONTEXT);
+        return few.execute(0);
     }
 
     @Benchmark
     public int workflowWithSixteenSteps() {
-        return many.execute(0, CONTEXT);
+        return many.execute(0);
     }
 
     @Benchmark
     public int nestedWorkflows() {
-        return nested.execute(0, CONTEXT);
+        return nested.execute(0);
     }
 
     @Benchmark
-    public FlowItem<Integer, Object, Integer> buildComposition() {
-        return FlowBuilder.builder(Integer.class, Object.class)
-                .step(INCREMENT)
+    public FlowItem<Integer, Integer> buildComposition() {
+        return FlowBuilder.from(INCREMENT)
                 .step(INCREMENT)
                 .step(INCREMENT)
                 .build();
     }
 
-    static final class AddWorkflow extends Workflow<Integer, Object, Integer> {
+    static final class AddWorkflow extends Workflow<Integer, Integer> {
 
-        private final FlowItem<Integer, Object, Integer> inner;
+        private final FlowItem<Integer, Integer> inner;
 
-        AddWorkflow(FlowItem<Integer, Object, Integer> inner) {
+        AddWorkflow(FlowItem<Integer, Integer> inner) {
             this.inner = inner;
         }
 
         @Override
         protected void configure() {
-            flowBuilder = FlowBuilder.builder(Integer.class, Object.class)
-                    .step(inner)
+            flowBuilder = FlowBuilder.from(inner)
                     .build();
         }
     }

@@ -7,11 +7,10 @@ package io.github.krisner94.harpia.core;
  * pipeline never carries values as {@code Object}.</p>
  *
  * @param <I> stage input
- * @param <C> execution context
  * @param <O> stage output
  */
 @FunctionalInterface
-interface Stage<I, C, O> {
+interface Stage<I, O> {
 
-    O execute(I input, C context);
+    O execute(I input);
 }

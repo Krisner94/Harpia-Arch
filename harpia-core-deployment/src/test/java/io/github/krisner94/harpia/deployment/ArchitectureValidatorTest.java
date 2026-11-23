@@ -100,10 +100,10 @@ class ArchitectureValidatorTest {
     }
 
     @Activity
-    static final class ValidActivity implements FlowItem<String, Object, String> {
+    static final class ValidActivity implements FlowItem<String, String> {
 
         @Override
-        public String execute(String input, Object context) {
+        public String execute(String input) {
             return input;
         }
     }
@@ -113,12 +113,12 @@ class ArchitectureValidatorTest {
     }
 
     @WorkflowDefinition
-    static final class ValidWorkflow extends Workflow<String, Object, String> {
+    static final class ValidWorkflow extends Workflow<String, String> {
 
         @Override
         protected void configure() {
-            flowBuilder = FlowBuilder.builder(String.class, Object.class)
-                    .step((input, context) -> input)
+            flowBuilder = FlowBuilder.builder(String.class)
+                    .step(input -> input)
                     .build();
         }
     }
@@ -146,10 +146,10 @@ class ArchitectureValidatorTest {
     }
 
     @Controller
-    static final class ControllerActivity implements FlowItem<String, Object, String> {
+    static final class ControllerActivity implements FlowItem<String, String> {
 
         @Override
-        public String execute(String input, Object context) {
+        public String execute(String input) {
             return input;
         }
     }

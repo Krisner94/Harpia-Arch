@@ -30,22 +30,22 @@ class CdiWorkflowTest {
         IncrementWorkflow workflow = workflowInstance.get();
 
         assertEquals(1, workflow.configurations.get());
-        assertEquals(6, workflow.execute(5, null));
-        assertEquals(7, workflow.execute(6, null));
+        assertEquals(6, workflow.execute(5));
+        assertEquals(7, workflow.execute(6));
         assertEquals(1, workflow.configurations.get());
     }
 
     @Activity
-    static class IncrementActivity implements FlowItem<Integer, Object, Integer> {
+    static class IncrementActivity implements FlowItem<Integer, Integer> {
 
         @Override
-        public Integer execute(Integer input, Object context) {
+        public Integer execute(Integer input) {
             return input + 1;
         }
     }
 
     @WorkflowDefinition
-    static class IncrementWorkflow extends Workflow<Integer, Object, Integer> {
+    static class IncrementWorkflow extends Workflow<Integer, Integer> {
 
         private final AtomicInteger configurations = new AtomicInteger();
 
@@ -55,8 +55,7 @@ class CdiWorkflowTest {
         @Override
         protected void configure() {
             configurations.incrementAndGet();
-            flowBuilder = FlowBuilder.builder(Integer.class, Object.class)
-                    .step(activity)
+            flowBuilder = FlowBuilder.from(activity)
                     .build();
         }
     }

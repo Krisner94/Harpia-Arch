@@ -10,15 +10,14 @@ import jakarta.annotation.PostConstruct;
  * {@code @PostConstruct}, and reused by every execution.</p>
  *
  * @param <I> workflow input
- * @param <C> execution context
  * @param <O> workflow output
  */
-public abstract class Workflow<I, C, O> implements FlowItem<I, C, O> {
+public abstract class Workflow<I, O> implements FlowItem<I, O> {
 
     /**
      * Flow built by {@link #configure()}.
      */
-    protected volatile FlowItem<I, C, O> flowBuilder;
+    protected volatile FlowItem<I, O> flowBuilder;
 
     /**
      * Declares and builds the flow. Must assign {@link #flowBuilder}.
@@ -51,17 +50,16 @@ public abstract class Workflow<I, C, O> implements FlowItem<I, C, O> {
      * Executes the workflow through the composition built by {@link #configure()}.
      *
      * @param input value passed to the first unit
-     * @param context execution context
      * @return value produced by the last unit
      */
     @Override
-    public final O execute(I input, C context) {
-        FlowItem<I, C, O> flow = flowBuilder;
+    public final O execute(I input) {
+        FlowItem<I, O> flow = flowBuilder;
         if (flow == null) {
             initialize();
             flow = flowBuilder;
         }
-        return flow.execute(input, context);
+        return flow.execute(input);
     }
 
     /**
@@ -69,7 +67,7 @@ public abstract class Workflow<I, C, O> implements FlowItem<I, C, O> {
      *
      * @return the immutable flow
      */
-    protected final FlowItem<I, C, O> flow() {
+    protected final FlowItem<I, O> flow() {
         initialize();
         return flowBuilder;
     }

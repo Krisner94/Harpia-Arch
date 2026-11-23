@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * Identifies a single step of a workflow.
  *
  * <p>Every class annotated with {@code @Activity} must implement
- * {@code io.github.krisner94.harpia.core.FlowItem<I, C, O>}, must have a single
+ * {@code io.github.krisner94.harpia.core.FlowItem<I, O>}, must have a single
  * responsibility, must not expose HTTP endpoints and must not know the workflow
  * structure.</p>
  *
